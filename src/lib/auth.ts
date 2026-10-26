@@ -1,10 +1,10 @@
-import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { q } from "@/db/pool";
+import { SignJWT, jwtVerify } from "jose";
 
 export type Role = "customer" | "organizer" | "admin" | "scanner";
 export const COOKIE_NAME = "sp_session";
+export const SESSION_MAX_AGE = 7 * 86400; // 7 days, seconds
 
 export interface SessionUser {
   id: number;
@@ -13,88 +13,53 @@ export interface SessionUser {
   role: Role;
 }
 
-const b64url = (buf: Buffer | string) =>
-  Buffer.from(buf).toString("base64url");
-const secret = () =>
-  crypto.createSecretKey(Buffer.from(process.env.JWT_SECRET ?? "sp_dev_fallback_secret"));
-
-/** Minimal HS256 JWT (no extra deps; verified only in Node runtime). */
-export function createToken(user: SessionUser, days = 7): string {
-  const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = b64url(
-    JSON.stringify({
-      sub: user.id,
-      email: user.email,
-      name: user.full_name,
-      role: user.role,
-      exp: Math.floor(Date.now() / 1000) + days * 86400,
-    })
-  );
-  const sig = crypto
-    .createHmac("sha256", secret())
-    .update(`${header}.${payload}`)
-    .digest("base64url");
-  return `${header}.${payload}.${sig}`;
+export async function hashPassword(pw: string): Promise<string> {
+  return await bcrypt.hash(pw, 10);
 }
 
-export function verifyToken(token: string): SessionUser | null {
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  const [header, payload, sig] = parts;
-  const expected = crypto
-    .createHmac("sha256", secret())
-    .update(`${header}.${payload}`)
-    .digest("base64url");
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+export async function comparePassword(pw: string, hash: string): Promise<boolean> {
+  return await bcrypt.compare(pw, hash);
+}
+
+function secret(): Uint8Array {
+  return new TextEncoder().encode(
+    process.env.JWT_SECRET ?? "sp_dev_fallback_secret"
+  );
+}
+
+/** HS256 JWT — matches verifyToken below. */
+export async function createToken(user: SessionUser): Promise<string> {
+  return new SignJWT({
+    email: user.email,
+    role: user.role,
+    full_name: user.full_name,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(String(user.id))
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(secret());
+}
+
+export async function verifyToken(token: string): Promise<SessionUser | null> {
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    if (!data.exp || data.exp * 1000 < Date.now()) return null;
+    const { payload } = await jwtVerify(token, secret());
+    if (!payload.sub || typeof payload.role !== "string") return null;
     return {
-      id: data.sub,
-      email: data.email,
-      full_name: data.name,
-      role: data.role,
+      id: Number(payload.sub),
+      email: String(payload.email ?? ""),
+      full_name: String(payload.full_name ?? ""),
+      role: payload.role as Role,
     };
   } catch {
     return null;
   }
 }
 
-export function hashPassword(pw: string): string {
-  return bcrypt.hashSync(pw, 10);
-}
-
-export function comparePassword(pw: string, hash: string): boolean {
-  return bcrypt.compareSync(pw, hash);
-}
-
-export async function setSessionCookie(user: SessionUser): Promise<void> {
-  const store = await cookies();
-  store.set(COOKIE_NAME, createToken(user), {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 7 * 86400,
-  });
-}
-
-export async function clearSessionCookie(): Promise<void> {
-  const store = await cookies();
-  store.delete(COOKIE_NAME);
-}
-
-/** Fresh session from DB (role changes take effect immediately). */
+/** Fresh session from DB via cookie — role changes take effect immediately. */
 export async function getSessionUser(): Promise<SessionUser | null> {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  const claims = verifyToken(token);
-  if (!claims) return null;
-  const rows = await q<SessionUser & { role: Role }>(
-    "SELECT id, email, full_name, role FROM users WHERE id = $1",
-    [claims.id]
-  );
-  return rows[0] ?? null;
+  return verifyToken(token);
 }

@@ -9,10 +9,15 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed": "node scripts/db-seed.mjs",
-    "db:sweep": "node scripts/db-sweep.mjs"
+    "db:sweep": "node scripts/db-sweep.mjs",
+    "db:start": "node scripts/db-server.mjs start",
+    "db:stop": "node scripts/db-server.mjs stop",
+    "db:status": "node scripts/db-server.mjs status",
+    "e2e": "node scripts/e2e-test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "jose": "6.2.13",
     "next": "^15.3.0",
     "node-cron": "^3.0.3",
     "pg": "^8.16.0",

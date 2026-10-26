@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { q } from "@/db/pool";
 import { ok, route, readJson, ApiError } from "@/lib/api";
-import { hashPassword, setSessionCookie, type Role } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { COOKIE_NAME, createToken } from "@/lib/auth";
+import { hashPassword, type Role } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -22,6 +24,12 @@ export const POST = route(async (req: Request) => {
     [email, hashPassword(input.password), input.full_name]
   );
   const user = rows[0];
-  await setSessionCookie(user);
+  const store = await cookies();
+  store.set(COOKIE_NAME, await createToken(user), {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 7 * 86400,
+  });
   return ok({ user }, 201);
 });

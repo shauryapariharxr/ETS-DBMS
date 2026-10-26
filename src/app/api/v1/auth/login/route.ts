@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { q } from "@/db/pool";
 import { ok, route, readJson, ApiError } from "@/lib/api";
-import { comparePassword, setSessionCookie, type Role } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { COOKIE_NAME, createToken } from "@/lib/auth";
+import { comparePassword, type Role } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -17,9 +19,15 @@ export const POST = route(async (req: Request) => {
     [input.email.toLowerCase()]
   );
   const user = rows[0];
-  if (!user || !comparePassword(input.password, user.password_hash)) {
+  if (!user || !(await comparePassword(input.password, user.password_hash))) {
     throw new ApiError(401, "Invalid email or password");
   }
-  await setSessionCookie({ id: user.id, email: user.email, full_name: user.full_name, role: user.role });
+  const store = await cookies();
+  store.set(COOKIE_NAME, await createToken({ id: user.id, email: user.email, full_name: user.full_name, role: user.role }), {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 7 * 86400,
+  });
   return ok({ user: { id: user.id, email: user.email, full_name: user.full_name, role: user.role } });
 });

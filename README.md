@@ -27,7 +27,7 @@ Built for the DBMS PBL (CSL_311) brief *"Event Ticketing & Seating"* on a **loca
 | Layer | Tech |
 |-------|------|
 | Framework | Next.js 15 (App Router, TypeScript) — UI + REST API in one app |
-| Database | PostgreSQL 16 (local), raw SQL migrations, `pg` pool |
+| Database | PostgreSQL 18 (local, portable — no admin needed), raw SQL migrations, `pg` pool |
 | Auth | JWT in httpOnly cookies, `middleware.ts` route gating, bcrypt |
 | Jobs | `node-cron` hold sweeper started from `instrumentation.ts` |
 | Styling | Tailwind CSS with custom palette tokens (see DESIGN.md) |
@@ -36,28 +36,49 @@ Built for the DBMS PBL (CSL_311) brief *"Event Ticketing & Seating"* on a **loca
 
 ### Prerequisites
 - Node.js 20+
-- PostgreSQL 16 running locally (service or Docker)
+- PostgreSQL 18 — this project ships with a **portable, no-admin** setup (step 1 below). Any local PostgreSQL 16+ works too if you prefer your own server.
 
-### 1. Create the database
+### 1. Start PostgreSQL
+The default setup is a self-contained cluster in your user profile — no Windows service, no admin rights:
+
+| Piece | Location |
+|-------|----------|
+| Binaries | `~/postgres-pg18/pgsql` (EDB binaries zip, PostgreSQL 18.6) |
+| Data dir | `~/postgres-stagepass` — port **5433**, database `stagepass`, user `postgres` / `postgres` |
+| Auto-start | `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\start-stagepass-postgres.vbs` — starts the cluster silently at Windows logon |
+
 ```bash
-# using psql (adjust credentials as needed)
-createdb stagepass
+npm run db:start     # start the cluster (also auto-starts at logon)
+npm run db:status     # ✔ running / ○ not running
+npm run db:stop      # stop it
 ```
+
+Using your own PostgreSQL instead? Create a `stagepass` database and point `DATABASE_URL` in `.env` at it (default port 5432).
 
 ### 2. Run the app (single Next.js project)
 ```bash
 npm install
-cp .env.example .env        # set DATABASE_URL=postgres://postgres:postgres@localhost:5432/stagepass
+cp .env.example .env        # DATABASE_URL already points at localhost:5433/stagepass
 npm run db:migrate          # runs src/db/migrations/*.sql in order
 npm run db:seed             # demo venues, seats, events, tiers, users
 npm run dev                 # http://localhost:3000 · admin panel at /admin
 ```
+
+> **Troubleshooting:** a `Runtime AggregateError` in `pool.ts` while rendering any page means PostgreSQL isn't running — run `npm run db:start` and refresh.
 
 ### Demo accounts (from seed)
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | `admin@stagepass.test` | `Admin@123` |
 | Customer | `customer@stagepass.test` | `Customer@123` |
+| Scanner (gate) | `scanner@stagepass.test` | `Scanner@123` |
+
+### 3. Verify everything
+```bash
+npm run typecheck           # tsc --noEmit
+npm run build               # production build (19 pages + 25 API routes)
+npm run e2e                 # 23-check smoke suite covering all 10 business rules
+```
 
 ## 📁 Project Structure
 

@@ -10,9 +10,9 @@ export async function adminStats() {
       `SELECT COALESCE(SUM(amount),0)::text AS total FROM payments WHERE status = 'succeeded'`
     ),
     q<{ active: number; used: number; comped: number }>(
-      `SELECT COUNT(*) FILTER (WHERE status='active')::int AS active,
-              COUNT(*) FILTER (WHERE status='used')::int AS used,
-              COUNT(*) FILTER (WHERE method='comp' )::int AS comped
+      `SELECT COUNT(*) FILTER (WHERE t.status='active')::int AS active,
+              COUNT(*) FILTER (WHERE t.status='used')::int AS used,
+              COUNT(*) FILTER (WHERE p.method='comp' )::int AS comped
        FROM tickets t LEFT JOIN payments p ON p.ticket_id = t.id`
     ),
     q<{ scheduled: number; cancelled: number }>(
