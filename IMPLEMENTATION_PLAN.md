@@ -31,22 +31,27 @@ A full-stack event ticketing platform with interactive seat maps, ticket tiers, 
 
 ```
 ┌──────────────────────────────────────────────┐
-│        Next.js 15 (App Router) — one app     │
-│  UI (React Server Components + client)       │
+│        React 19 UI — Next.js 15 (App Router) │
 │  - Customer storefront  ·  Admin dashboard   │
-│  REST API: /api/v1 route handlers (Node)     │
-│  - Auth (JWT in httpOnly cookie + middleware)│
+│  - Server components call the REST API       │
+│  - /api/v1/* proxied via next.config rewrite │
+└──────────────────────┬───────────────────────┘
+                       │ HTTP (JSON)
+┌──────────────────────▼───────────────────────┐
+│        Express.js REST API (server/)         │
+│  - Auth (bcrypt + JWT httpOnly cookie)       │
+│  - express-validator, CORS, multer uploads   │
+│  - Central error handler                     │
 │  - Booking engine (txns) · QR generate/verify│
-│  - instrumentation.ts → cron: hold sweeper   │
+│  - node-cron hold sweeper                    │
 └──────────────────────┬───────────────────────┘
                        │ pg (pool)
                 ┌──────▼───────┐
                 │ PostgreSQL   │
-                │ (local)      │
                 └──────────────┘
 ```
 
-**Single-app layout (Next.js):**
+**Repository layout (React frontend + Express backend):**
 
 ```
 stagepass/
@@ -54,36 +59,38 @@ stagepass/
 │   ├── app/
 │   │   ├── (customer)/      # browse, event detail, seat selection, checkout, my tickets
 │   │   ├── admin/           # admin panel: dashboard, events, venues, scans, users, audit
-│   │   ├── api/v1/          # REST route handlers: auth, events, holds, bookings,
-│   │   │                    #   tickets, scans, admin
 │   │   ├── layout.tsx       # root layout, fonts
 │   │   └── globals.css      # design tokens from DESIGN.md
 │   ├── components/          # SeatMap, EventCard, QRCode, charts, data tables
-│   ├── lib/                 # auth, rbac, zod validation, booking engine (txns),
-│   │                        #   scan service, audit writer, qr, mock payments
-│   ├── db/
-│   │   ├── migrations/      # plain SQL, numbered
-│   │   ├── seeds/           # demo venues, events, users
-│   │   └── pool.ts          # pg pool
-│   ├── middleware.ts        # JWT cookie auth + role gating for /admin and /api
-│   └── instrumentation.ts   # starts node-cron hold sweeper on server boot
-├── .env.example             # DATABASE_URL, JWT_SECRET
-└── docker-compose.yml       # optional: local postgres
+│   ├── lib/                 # JWT verification + REST API client for server components
+│   ├── db/migrations/       # plain SQL, numbered
+│   └── middleware.ts        # JWT cookie auth + role gating for /admin and /scan
+├── server/                  # Express backend
+│   ├── index.js             # app bootstrap, CORS, routers, error handler, sweeper
+│   ├── auth.js              # bcrypt + jsonwebtoken + requireRole
+│   ├── errors.js            # ApiError + central error handler
+│   ├── validation.js        # express-validator result middleware
+│   ├── routes/              # auth, events, venues, booking, scans, uploads, admin
+│   └── services/            # SQL + business rules
+├── database/schema.sql      # single-file PostgreSQL schema
+├── .env.example             # DATABASE_URL, JWT_SECRET, API_PORT, CORS origins
+└── scripts/                 # migrate, seed, e2e
 ```
 
 ## 3. Tech Stack
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| DB | PostgreSQL 16 (local) | required; rich constraint support (partial indexes, exclusion) maps directly to the rules |
+| DB | PostgreSQL 16+ | project decision (MySQL in the brief); rich constraint support (partial indexes) maps directly to the rules |
 | DB access | `pg` + raw SQL migrations | a DBMS project should show real SQL: DDL, constraints, triggers, indexes |
-| Framework | Next.js 15 (App Router) + TypeScript | UI and REST API in one app; Route Handlers (Node runtime) serve `/api/v1` |
-| Auth | JWT in httpOnly cookie, `middleware.ts` gating, `bcrypt` hashes | roles: `customer`, `organizer`, `admin`; session readable inside server components |
+| API | Node.js + **Express.js** (`server/`) | REST API required by the brief; `cors`, `express-validator`, `multer`, `jsonwebtoken` |
+| Framework | Next.js 15 (App Router) + TypeScript | React UI; server components consume the REST API |
+| Auth | JWT in httpOnly cookie, `middleware.ts` gating, bcrypt hashes | roles: `customer`, `organizer`, `admin`, `scanner` |
 | QR | `qrcode` (server-side PNG/data-URL), verify by token lookup | rule 6/7 |
-| Jobs | `node-cron` started from `instrumentation.ts` | rule 9 hold expiry |
+| Jobs | `node-cron` started from `server/index.js` | rule 9 hold expiry |
 | Rendering | React Server Components + client components | server-fetched data (events, seats); interactive seat map as a client component |
 | Styling | Tailwind CSS v4 with custom tokens from DESIGN.md | modern, clean, palette-driven |
-| Validation | `zod` on both API and forms | consistent errors |
+| Validation | `express-validator` on the API + HTML5/React checks in forms | consistent 422 errors |
 
 ## 4. Database Schema (key tables)
 
@@ -117,19 +124,23 @@ Indexes: `events(starts_at)`, `events(status)`, `tickets(user_id)`, `tickets(eve
 
 | Method & path | Purpose | Access |
 |---|---|---|
-| `POST /auth/register`, `POST /auth/login` | JWT auth | public |
-| `GET /venues`, `GET /venues/:id/seats` | venue + layout | public |
-| `GET /events`, `GET /events/:id` (with tier availability) | browse | public |
+| `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | bcrypt + JWT session | public / user |
+| `GET /events`, `GET /events/:id` (with tier availability) | search, filter, pagination, detail | public |
+| `POST /events`, `PUT /events/:id`, `DELETE /events/:id` | event CRUD | admin |
+| `GET /events/:id/seats` | live seat map | public |
+| `GET /venues`, `GET /venues/:id`, `GET /venues/:id/seats` | venue + layout | public |
+| `POST /venues`, `PUT /venues/:id`, `DELETE /venues/:id` | venue CRUD | admin |
 | `POST /events/:id/holds` | hold selected seats (10 min) | customer |
-| `DELETE /holds/:id` | release hold | customer |
-| `POST /bookings/checkout` | atomically: validate holds → create ticket snapshots (rule 4) → record payment → activate ticket → audit | customer |
-| `GET /tickets/mine` | my tickets + QR | customer |
-| `POST /tickets/:id/transfer` | transfer to another user (audited) | customer |
-| `POST /scans/validate` | body: `{ qr_code, gate_id }` → grant/deny + reason (rule 7) | scanner/organizer |
-| `POST /admin/events` … CRUD | manage venues/events/tiers | admin |
-| `POST /admin/events/:id/cancel` | stop sales + create refunds (rule 8) | admin |
-| `POST /admin/tickets/:id/comp` | complimentary issuance (rule 5) | admin |
-| `GET /admin/stats/*` | sales, revenue, occupancy, scan feed | admin |
+| `GET /holds`, `DELETE /holds` | list / release holds | customer |
+| `POST /bookings/checkout` | atomically: validate holds → snapshot prices (rule 4) → payment → activate ticket → audit | customer |
+| `GET /tickets/mine`, `POST /tickets/:id/transfer` | my tickets + QR; audited transfer | customer |
+| `POST /scans/validate` | `{ qr_code, gate_id }` → grant/deny + reason (rule 7) | scanner/organizer/admin |
+| `POST /uploads` | multer upload (event banner) | admin/organizer |
+| `GET /admin/stats`, `GET /admin/audit` | revenue, occupancy, scan feed, audit log | admin |
+| `GET /admin/events`, `POST /admin/events/:id/cancel` | event oversight; stop sales + refunds (rule 8) | admin |
+| `GET/POST /admin/users`, `PATCH/DELETE /admin/users/:id` | user CRUD and role changes | admin |
+| `POST /admin/tickets/comp` | complimentary issuance (rule 5) | admin |
+| `GET /health` | API + database liveness | public |
 
 ## 6. Delivery Phases
 

@@ -4,9 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Client-side sign-out: the cookie itself is cleared by the
- * /api/v1/auth/logout Route Handler (Next.js only allows cookie writes
- * in Route Handlers / Server Actions).
+ * Client-side sign-out: the httpOnly JWT cookie is cleared by the Express
+ * endpoint POST /api/v1/auth/logout, proxied through /api/v1.
  */
 export default function LogoutPage() {
   const router = useRouter();

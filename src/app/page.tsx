@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
-import { listCities, listEvents } from "@/lib/queries";
+import { getEventList } from "@/lib/queries";
 import { Footer, Header, StatusChip } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
+
+const CATEGORIES = ["Music", "Comedy", "Tech", "Theatre", "Sports"];
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleString("en-IN", {
@@ -18,16 +20,24 @@ function fmtDate(d: string) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; city?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; city?: string; category?: string; page?: string }>;
 }) {
   const sp = await searchParams;
-  const [session, events, cities] = await Promise.all([
+  const page = Math.max(1, Number(sp.page ?? 1) || 1);
+
+  const [session, { events, cities, pagination }] = await Promise.all([
     getSessionUser(),
-    listEvents({ q: sp.q, city: sp.city, category: sp.category }),
-    listCities(),
+    getEventList({ q: sp.q, city: sp.city, category: sp.category, page, limit: 9 }),
   ]);
 
-  const categories = ["Music", "Comedy", "Tech"];
+  const pageHref = (target: number) => {
+    const params = new URLSearchParams();
+    if (sp.q) params.set("q", sp.q);
+    if (sp.city) params.set("city", sp.city);
+    if (sp.category) params.set("category", sp.category);
+    params.set("page", String(target));
+    return `/?${params.toString()}`;
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -40,8 +50,8 @@ export default async function HomePage({
             Find your seat. Keep the memory.
           </h1>
           <p className="mt-2 max-w-xl text-white/85">
-            Interactive seat maps, fair pricing locked at checkout, and QR entry — all backed by a
-            fully audited PostgreSQL booking engine.
+            Interactive seat maps, fair pricing locked at checkout, and QR entry — all backed by an
+            Express REST API on PostgreSQL.
           </p>
           <form action="/" className="mt-6 flex flex-wrap gap-2">
             <input
@@ -50,19 +60,27 @@ export default async function HomePage({
               placeholder="Search events…"
               className="input max-w-xs border-transparent text-ink"
             />
-            <select name="city" defaultValue={sp.city ?? ""} className="input max-w-[160px] border-transparent text-ink">
+            <select
+              name="city"
+              defaultValue={sp.city ?? ""}
+              className="input max-w-[160px] border-transparent text-ink"
+            >
               <option value="">All cities</option>
-              {cities.map((c) => (
-                <option key={c.city} value={c.city}>
-                  {c.city}
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
                 </option>
               ))}
             </select>
-            <select name="category" defaultValue={sp.category ?? ""} className="input max-w-[150px] border-transparent text-ink">
+            <select
+              name="category"
+              defaultValue={sp.category ?? ""}
+              className="input max-w-[150px] border-transparent text-ink"
+            >
               <option value="">All categories</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
                 </option>
               ))}
             </select>
@@ -78,7 +96,7 @@ export default async function HomePage({
           <h2 className="font-display text-xl font-semibold">
             Upcoming events{" "}
             <span className="text-sm font-normal text-ink-soft">
-              ({events.length})
+              ({pagination.total})
             </span>
           </h2>
           {(sp.q || sp.city || sp.category) && (
@@ -90,37 +108,76 @@ export default async function HomePage({
 
         {events.length === 0 ? (
           <div className="card p-12 text-center text-ink-soft">
-            No events match your filters. <Link href="/" className="text-ink-blue hover:underline">Reset</Link>
+            No events match your filters.{" "}
+            <Link href="/" className="text-ink-blue hover:underline">
+              Reset
+            </Link>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((e) => (
-              <Link key={e.id} href={`/events/${e.id}`} className="card group overflow-hidden transition hover:shadow-[var(--shadow-lift)]">
-                <div className="flex h-28 items-end bg-gradient-to-br from-ink-blue to-sky-teal p-4">
-                  <span className="chip bg-white/90 text-ink-blue">{e.category}</span>
+            {events.map((event) => (
+              <Link
+                key={event.id}
+                href={`/events/${event.id}`}
+                className="card group overflow-hidden transition hover:shadow-[var(--shadow-lift)]"
+              >
+                <div className="relative flex h-28 items-end bg-gradient-to-br from-ink-blue to-sky-teal p-4">
+                  {event.banner_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={event.banner_url}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : null}
+                  <span className="chip relative bg-white/90 text-ink-blue">{event.category}</span>
                 </div>
                 <div className="p-5">
                   <h3 className="font-display text-lg font-semibold leading-snug group-hover:text-ink-blue">
-                    {e.title}
+                    {event.title}
                   </h3>
                   <p className="mt-1 text-sm text-ink-soft">
-                    {fmtDate(e.starts_at)} · {e.venue_name}, {e.city}
+                    {fmtDate(event.starts_at)} · {event.venue_name}, {event.city}
                   </p>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="tnum text-sm font-semibold text-ink-blue">
-                      {e.min_price ? `from ₹${Number(e.min_price).toLocaleString("en-IN")}` : "Free"}
+                      {event.min_price
+                        ? `from ₹${Number(event.min_price).toLocaleString("en-IN")}`
+                        : "Free"}
                     </span>
                     <span className="text-xs text-ink-soft">
-                      {e.capacity - e.tickets_sold} seats left
+                      {event.capacity - event.tickets_sold} seats left
                     </span>
                   </div>
                   <div className="mt-3">
-                    <StatusChip status={e.status} />
+                    <StatusChip status={event.status} />
                   </div>
                 </div>
               </Link>
             ))}
           </div>
+        )}
+
+        {pagination.pages > 1 && (
+          <nav className="mt-8 flex items-center justify-between text-sm" aria-label="Pagination">
+            {pagination.page > 1 ? (
+              <Link href={pageHref(pagination.page - 1)} className="btn-ghost">
+                ← Previous
+              </Link>
+            ) : (
+              <span className="btn-ghost pointer-events-none opacity-40">← Previous</span>
+            )}
+            <span className="tnum text-ink-soft">
+              Page {pagination.page} of {pagination.pages}
+            </span>
+            {pagination.page < pagination.pages ? (
+              <Link href={pageHref(pagination.page + 1)} className="btn-ghost">
+                Next →
+              </Link>
+            ) : (
+              <span className="btn-ghost pointer-events-none opacity-40">Next →</span>
+            )}
+          </nav>
         )}
       </main>
       <Footer />

@@ -30,7 +30,7 @@ export default function AdminVenuesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const d = await fetch("/api/v1/admin/venues").then((r) => r.json());
+    const d = await fetch("/api/v1/venues").then((r) => r.json());
     setVenues(d.venues ?? []);
   }, []);
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function AdminVenuesPage() {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const res = await fetch("/api/v1/admin/venues", {
+    const res = await fetch("/api/v1/venues", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

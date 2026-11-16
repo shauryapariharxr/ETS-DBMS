@@ -94,6 +94,13 @@ async function main() {
         }
       }
       seatsByTier.push(tiers);
+
+      // Seeded venues were "created" by the admin — keep the audit trail realistic.
+      await c.query(
+        `INSERT INTO audit_logs(actor_id,action,entity_type,entity_id,new_data)
+         VALUES ($1,'venue.created','venue',$2,$3)`,
+        [userIds.admin, rows[0].id, JSON.stringify({ name: v.name, capacity })]
+      );
     }
 
     // Events + tiers
@@ -120,6 +127,12 @@ async function main() {
           [rows[0].id, tierName, price, 0.05, 40, qty, days(e.inDays - 14, 9), end]
         );
       }
+
+      await c.query(
+        `INSERT INTO audit_logs(actor_id,action,entity_type,entity_id,new_data)
+         VALUES ($1,'event.created','event',$2,$3)`,
+        [userIds.admin, rows[0].id, JSON.stringify({ title: e.title, venue_id: venueId })]
+      );
     }
 
     // Sample paid tickets for the demo customer (nearest event, VIP seats A1-A2 + one used)

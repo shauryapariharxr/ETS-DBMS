@@ -13,18 +13,25 @@
     "db:start": "node scripts/db-server.mjs start",
     "db:stop": "node scripts/db-server.mjs stop",
     "db:status": "node scripts/db-server.mjs status",
-    "e2e": "node scripts/e2e-test.mjs"
+    "e2e": "node scripts/e2e-test.mjs",
+    "api": "node server/index.js",
+    "api:dev": "node --watch server/index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-validator": "^7.3.2",
     "jose": "6.2.13",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.5.0",
     "next": "^15.3.0",
     "node-cron": "^3.0.3",
     "pg": "^8.16.0",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "zod": "^3.25.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
@@ -36,5 +43,6 @@
     "@types/react-dom": "^19.0.0",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.8.0"
-  }
+  },
+  "type": "module"
 }

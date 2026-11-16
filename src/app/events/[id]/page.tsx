@@ -41,6 +41,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
+        {event.banner_url && (
+          <div className="mt-6 overflow-hidden rounded-2xl border border-line">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={event.banner_url}
+              alt={`${event.title} banner`}
+              className="h-64 w-full object-cover"
+            />
+          </div>
+        )}
+
         <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
           <section className="card p-6">
             <h2 className="font-display text-lg font-semibold">Ticket tiers</h2>

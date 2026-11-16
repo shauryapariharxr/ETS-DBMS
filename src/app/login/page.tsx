@@ -81,6 +81,9 @@ function LoginForm() {
           <button type="button" className="text-left hover:text-ink-blue" onClick={() => quickFill("scanner@stagepass.test", "Scanner@123")}>
             🎫 scanner@stagepass.test · Scanner@123
           </button>
+          <button type="button" className="text-left hover:text-ink-blue" onClick={() => quickFill("organizer@stagepass.test", "Organizer@123")}>
+            🎬 organizer@stagepass.test · Organizer@123
+          </button>
         </div>
       </div>
 
