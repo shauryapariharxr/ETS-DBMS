@@ -1,0 +1,56 @@
+# Render Blueprint — StagePass Express API + managed PostgreSQL.
+#
+# Deploy: push this repo to GitHub, then Render Dashboard → New → Blueprint →
+# select the repository. Render reads this file, creates the database and the
+# web service, and wires DATABASE_URL automatically.
+#
+# After the first deploy, open the service's Shell tab and run:
+#   npm run db:migrate        # creates the 10 tables + indexes
+#   npm run db:seed           # optional demo users/events (admin@stagepass.test)
+#
+# Then set FRONTEND_ORIGIN to the deployed frontend origin and redeploy.
+
+databases:
+  - name: stagepass-db
+    databaseName: stagepass
+    user: stagepass
+    plan: free
+
+services:
+  - type: web
+    name: stagepass-api
+    runtime: node
+    plan: free
+    rootDir: .
+    # The API is plain Node — no build step, only production dependencies.
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run api
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stagepass-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: HOLD_MINUTES_DEFAULT
+        value: "10"
+      # Set this in the dashboard, e.g. https://stagepass.vercel.app
+      # Comma-separate multiple origins if you use a custom domain too.
+      - key: FRONTEND_ORIGIN
+        sync: false
+      # Browser traffic normally goes through the Next.js proxy (same origin),
+      # but direct cross-site calls need SameSite=None + Secure.
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: COOKIE_SECURE
+        value: "true"
+      # Optional: point uploads at a mounted persistent disk (Web Service →
+      # Disks → mount at /var/data) so event banners survive restarts.
+      # - key: UPLOAD_DIR
+      #   value: /var/data/uploads

@@ -40,6 +40,9 @@ export const CORS_ORIGINS = (
   .filter(Boolean);
 export const CORS_ALLOW_ANY = process.env.CORS_ALLOW_ANY === "true";
 
-export const UPLOAD_DIR = path.resolve(process.cwd(), "server", "uploads");
+/** multer destination — override with UPLOAD_DIR to use a mounted persistent volume. */
+export const UPLOAD_DIR = process.env.UPLOAD_DIR
+  ? path.resolve(process.env.UPLOAD_DIR)
+  : path.resolve(process.cwd(), "server", "uploads");
 export const UPLOAD_URL_PREFIX = "/uploads";
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;

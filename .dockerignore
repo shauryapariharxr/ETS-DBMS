@@ -1,0 +1,19 @@
+# Keep the image small and never bake in secrets or local build output.
+node_modules
+.next
+out
+.git
+.github
+*.log
+tsconfig.tsbuildinfo
+.env
+.env.*
+!.env.example
+server/uploads/*
+!server/uploads/.gitkeep
+README.md
+IMPLEMENTATION_PLAN.md
+DESIGN.md
+render.yaml
+Dockerfile
+.dockerignore

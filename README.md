@@ -217,21 +217,78 @@ Validation errors return `422`; every handler returns `{ error, code }` on failu
 
 ## 🌍 Deployment
 
-The brief requires all three parts online. Recommended split (any provider works):
+The brief requires all three parts online. This repo ships the config for it: a Render
+blueprint for the API + managed PostgreSQL, a portable `Dockerfile`, and the environment
+variables for a Vercel frontend.
 
-| Part | Host | Environment variables |
-|------|------|----------------------|
-| Database | Neon / Railway / Aiven PostgreSQL | — (copy the connection string) |
-| Backend | Render / Railway (Node) | `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_ORIGIN=https://<frontend>`, `COOKIE_SAMESITE=none`, `COOKIE_SECURE=true` |
-| Frontend | Vercel / Netlify | `API_URL=https://<backend>`, `NEXT_PUBLIC_API_URL=https://<backend>` |
+| Part | Host | Config |
+|------|------|--------|
+| PostgreSQL | Render (provisioned by the blueprint) or Neon / Railway / Aiven | `render.yaml` → `databases` |
+| Express API | Render (Node runtime) or any Docker host | `render.yaml`, `Dockerfile` |
+| React frontend | Vercel (auto-detects Next.js) | env vars in step 2 |
 
-Steps
-1. Create the cloud PostgreSQL database, then import `database/schema.sql` (psql or the provider's SQL editor).
-2. Backend: root directory = repo root, build command `npm install`, start command `npm run api`. `PORT` is injected by most hosts.
-3. Frontend: build `npm run build`, output is Next.js — Vercel detects it automatically. Set both API URL variables.
-4. Add the deployed frontend origin to `FRONTEND_ORIGIN` so CORS accepts browser requests, and use `COOKIE_SAMESITE=none` + `COOKIE_SECURE=true` if the two sites differ.
-5. Seed the deployed database once (`npm run db:seed` against the cloud `DATABASE_URL`) or create an admin user manually.
-6. Share the live frontend link, the backend base URL and the GitHub repository link, plus one login per role.
+### 1. API + database on Render
+1. Push this repo to GitHub.
+2. Render Dashboard → **New → Blueprint** → pick the repository. Render reads `render.yaml` and creates
+   `stagepass-api` (health check `/api/v1/health`) plus `stagepass-db`, wiring `DATABASE_URL` automatically.
+3. Open the service's **Shell** tab and initialise the database (the shell has `DATABASE_URL`):
+   ```bash
+   npm run db:migrate     # 10 tables, indexes, constraints
+   npm run db:seed        # optional demo users/events for the viva
+   ```
+4. Copy the service URL (e.g. `https://stagepass-api.onrender.com`) and confirm
+   `https://…/api/v1/health` returns `{"status":"ok","database":"connected"}`.
+
+> Free instances sleep when idle, so the first request can take ~30–50 s. Render's free
+> PostgreSQL expires after 30 days — swap `DATABASE_URL` for Neon/Railway/Aiven before then.
+
+Any Docker host works too:
+```bash
+docker build -t stagepass-api .
+docker run -p 4000:4000 \
+  -e DATABASE_URL=postgresql://user:pass@host:5432/stagepass \
+  -e JWT_SECRET=change-me -e FRONTEND_ORIGIN=https://your-frontend.example \
+  stagepass-api
+```
+On Railway: New Project → Deploy from repo (it picks up the `Dockerfile`), add the same variables,
+then run `npm run db:migrate` in its shell.
+
+### 2. Frontend on Vercel
+1. Vercel → **Add New → Project** → import the repo (Next.js is detected automatically).
+2. Add these environment variables for Production and Preview **before** the first build:
+   - `API_URL=https://stagepass-api.onrender.com`
+   - `NEXT_PUBLIC_API_URL=https://stagepass-api.onrender.com`
+
+   `next.config.ts` bakes them into the `/api/v1` and `/uploads` proxies at build time, so re-deploy
+   after changing them.
+3. Deploy and note the URL, e.g. `https://stagepass.vercel.app`.
+
+### 3. Close the loop
+- On Render set `FRONTEND_ORIGIN=https://stagepass.vercel.app` (comma-separated if you add a custom
+  domain) and redeploy. That is the CORS allowlist — without it, direct browser calls to the API
+  return `403 CORS_BLOCKED`.
+- Sign in on the live frontend with `admin@stagepass.test / Admin@123` and check the dashboard loads.
+
+### API environment variables
+| Variable | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `JWT_SECRET` | yes | HS256 signing key (the blueprint generates one) |
+| `FRONTEND_ORIGIN` | yes in production | CORS allowlist, comma separated |
+| `PORT` / `API_PORT` | platform-provided | listen port (`PORT` is picked up automatically) |
+| `COOKIE_SAMESITE` / `COOKIE_SECURE` | production | `none` + `true` for cross-site cookie use |
+| `JWT_EXPIRES_IN`, `HOLD_MINUTES_DEFAULT` | no | token lifetime and seat-hold window |
+| `UPLOAD_DIR` | no | uploads folder on a mounted persistent disk |
+
+**Uploads on a hosted API:** container filesystems are ephemeral, so uploaded banners vanish on
+restart or redeploy. Attach a Render disk (mount `/var/data`) and set `UPLOAD_DIR=/var/data/uploads`,
+or move the upload to object storage.
+
+### Submission checklist
+The report/PPT must list the live frontend URL, the API base URL (`https://…/api/v1`) and the GitHub
+repository, plus one login per role:
+`admin@stagepass.test / Admin@123` · `organizer@stagepass.test / Organizer@123` ·
+`customer@stagepass.test / Customer@123` · `scanner@stagepass.test / Scanner@123`.
 
 ---
 
@@ -246,3 +303,4 @@ Steps
 - [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) — architecture, schema, phases
 - [`DESIGN.md`](./DESIGN.md) — colour system, typography, component specs
 - [`database/schema.sql`](./database/schema.sql) — complete PostgreSQL schema
+- [`render.yaml`](./render.yaml) · [`Dockerfile`](./Dockerfile) — API + PostgreSQL hosting config
