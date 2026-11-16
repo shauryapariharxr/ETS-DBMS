@@ -4,11 +4,13 @@
 # select the repository. Render reads this file, creates the database and the
 # web service, and wires DATABASE_URL automatically.
 #
-# After the first deploy, open the service's Shell tab and run:
-#   npm run db:migrate        # creates the 10 tables + indexes
-#   npm run db:seed           # optional demo users/events (admin@stagepass.test)
+# The first boot creates the schema and the demo data automatically
+# (DB_AUTO_MIGRATE / DB_AUTO_SEED below), so no Shell step is needed. Both are
+# idempotent: later deploys only apply migrations that are still pending and
+# never touch existing users.
 #
-# Then set FRONTEND_ORIGIN to the deployed frontend origin and redeploy.
+# After the first deploy, set FRONTEND_ORIGIN to the deployed frontend origin
+# and redeploy.
 
 databases:
   - name: stagepass-db
@@ -40,6 +42,12 @@ services:
         value: 7d
       - key: HOLD_MINUTES_DEFAULT
         value: "10"
+      # Fresh-deploy bootstrap: apply pending migrations, then seed the demo
+      # dataset only when the users table is empty.
+      - key: DB_AUTO_MIGRATE
+        value: "true"
+      - key: DB_AUTO_SEED
+        value: "true"
       # Set this in the dashboard, e.g. https://stagepass.vercel.app
       # Comma-separate multiple origins if you use a custom domain too.
       - key: FRONTEND_ORIGIN

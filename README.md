@@ -231,13 +231,17 @@ variables for a Vercel frontend.
 1. Push this repo to GitHub.
 2. Render Dashboard → **New → Blueprint** → pick the repository. Render reads `render.yaml` and creates
    `stagepass-api` (health check `/api/v1/health`) plus `stagepass-db`, wiring `DATABASE_URL` automatically.
-3. Open the service's **Shell** tab and initialise the database (the shell has `DATABASE_URL`):
-   ```bash
-   npm run db:migrate     # 10 tables, indexes, constraints
-   npm run db:seed        # optional demo users/events for the viva
-   ```
+3. That is it — no Shell step. On the first boot the API reads `DB_AUTO_MIGRATE=true` and
+   `DB_AUTO_SEED=true` from `render.yaml`, applies the pending migrations from
+   `src/db/migrations`, and seeds the demo dataset (only when the `users` table is empty).
+   The log shows `[setup] schema ready …` and `[setup] demo data seeded: …`; later deploys
+   print `schema up to date` and `skipping demo seed`, so restarts never duplicate data.
+   Both steps take a session advisory lock, so extra instances cannot race.
 4. Copy the service URL (e.g. `https://stagepass-api.onrender.com`) and confirm
    `https://…/api/v1/health` returns `{"status":"ok","database":"connected"}`.
+
+   Prefer to do it by hand? Set both flags to `false` and run `npm run db:migrate` /
+   `npm run db:seed` in the service Shell or against any `DATABASE_URL`.
 
 > Free instances sleep when idle, so the first request can take ~30–50 s. Render's free
 > PostgreSQL expires after 30 days — swap `DATABASE_URL` for Neon/Railway/Aiven before then.
@@ -278,6 +282,8 @@ then run `npm run db:migrate` in its shell.
 | `PORT` / `API_PORT` | platform-provided | listen port (`PORT` is picked up automatically) |
 | `COOKIE_SAMESITE` / `COOKIE_SECURE` | production | `none` + `true` for cross-site cookie use |
 | `JWT_EXPIRES_IN`, `HOLD_MINUTES_DEFAULT` | no | token lifetime and seat-hold window |
+| `DB_AUTO_MIGRATE` | production | apply pending migrations on boot |
+| `DB_AUTO_SEED` | production | seed demo data when `users` is empty |
 | `UPLOAD_DIR` | no | uploads folder on a mounted persistent disk |
 
 **Uploads on a hosted API:** container filesystems are ephemeral, so uploaded banners vanish on

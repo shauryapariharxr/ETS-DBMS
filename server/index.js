@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import cron from "node-cron";
 import {
+  AUTO_MIGRATE,
+  AUTO_SEED,
   CORS_ALLOW_ANY,
   CORS_ORIGINS,
   NODE_ENV,
@@ -13,6 +15,7 @@ import { pool, q } from "./db.js";
 import { ApiError, errorHandler, notFoundHandler } from "./errors.js";
 import { optionalUser } from "./auth.js";
 import { sweepExpired } from "./services/booking.js";
+import { ensureDatabaseSchema } from "./setup.js";
 import { authRouter } from "./routes/auth.js";
 import { eventsRouter } from "./routes/events.js";
 import { venuesRouter } from "./routes/venues.js";
@@ -92,28 +95,43 @@ app.use("/api/v1/admin", adminRouter);
 app.use(notFoundHandler); // 404 for unknown routes
 app.use(errorHandler); // central error handler (must be last)
 
-const server = app.listen(PORT, () => {
-  console.log(`[stagepass-api] Express listening on http://localhost:${PORT} (${NODE_ENV})`);
-});
-
-// ---- Rule 9: release expired seat holds every 30 seconds ----
-cron.schedule("*/30 * * * * *", async () => {
-  try {
-    const result = await sweepExpired();
-    if (result.holds || result.pendings) {
-      console.log(`[sweeper] released ${result.holds} hold(s), cancelled ${result.pendings} stale ticket(s)`);
+async function start() {
+  // ---- Fresh-deployment bootstrap: create tables (and demo data) before serving ----
+  if (AUTO_MIGRATE || AUTO_SEED) {
+    try {
+      await ensureDatabaseSchema();
+    } catch (error) {
+      // Fail the boot visibly instead of serving 500s against a missing schema.
+      console.error(`[setup] automatic database setup failed: ${error.message}`);
+      process.exit(1);
     }
-  } catch (error) {
-    console.error("[sweeper]", error.message);
   }
-});
-console.log("[stagepass-api] hold sweeper scheduled every 30s");
 
-for (const signal of ["SIGINT", "SIGTERM"]) {
-  process.on(signal, () => {
-    console.log(`\n[stagepass-api] ${signal} received — shutting down`);
-    server.close(() => {
-      pool.end().finally(() => process.exit(0));
-    });
+  const server = app.listen(PORT, () => {
+    console.log(`[stagepass-api] Express listening on http://localhost:${PORT} (${NODE_ENV})`);
   });
+
+  // ---- Rule 9: release expired seat holds every 30 seconds ----
+  cron.schedule("*/30 * * * * *", async () => {
+    try {
+      const result = await sweepExpired();
+      if (result.holds || result.pendings) {
+        console.log(`[sweeper] released ${result.holds} hold(s), cancelled ${result.pendings} stale ticket(s)`);
+      }
+    } catch (error) {
+      console.error("[sweeper]", error.message);
+    }
+  });
+  console.log("[stagepass-api] hold sweeper scheduled every 30s");
+
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.on(signal, () => {
+      console.log(`\n[stagepass-api] ${signal} received — shutting down`);
+      server.close(() => {
+        pool.end().finally(() => process.exit(0));
+      });
+    });
+  }
 }
+
+start();
