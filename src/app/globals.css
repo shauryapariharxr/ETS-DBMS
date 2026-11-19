@@ -47,9 +47,8 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(60rem 32rem at 12% -8%, rgba(70, 224, 208, 0.16), transparent 62%),
-    radial-gradient(46rem 28rem at 88% 0%, rgba(90, 169, 255, 0.14), transparent 60%),
-    radial-gradient(40rem 26rem at 50% 110%, rgba(70, 224, 208, 0.08), transparent 70%);
+    radial-gradient(52rem 30rem at 8% -12%, rgba(70, 224, 208, 0.11), transparent 60%),
+    radial-gradient(44rem 26rem at 92% -6%, rgba(90, 169, 255, 0.09), transparent 58%);
 }
 
 body > * {
@@ -84,29 +83,33 @@ body > * {
 .btn-primary,
 .btn-ghost,
 .btn-danger {
-  @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-4 font-medium
-         transition-all duration-150 cursor-pointer select-none
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 text-sm font-medium
+         transition-colors duration-150 cursor-pointer select-none
          focus-visible:outline-2 focus-visible:outline-offset-2
          focus-visible:outline-sky-teal disabled:opacity-50 disabled:cursor-not-allowed;
   min-height: 40px;
 }
+.btn-sm {
+  min-height: 34px;
+  padding-inline: 16px;
+  font-size: 13px;
+}
 .btn-primary {
-  color: #03110f;
-  background: linear-gradient(120deg, var(--color-ink-blue), var(--color-sky-teal));
-  box-shadow: 0 0 0 1px rgba(70, 224, 208, 0.35), 0 10px 30px rgba(70, 224, 208, 0.18);
+  color: #04120f;
+  background-color: var(--color-ink-blue);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset;
 }
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 0 0 1px rgba(70, 224, 208, 0.55), 0 14px 38px rgba(70, 224, 208, 0.3);
-  filter: brightness(1.06);
+  background-color: var(--color-ink-blue-hover);
 }
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.02);
+  background: transparent;
   border: 1px solid var(--color-line);
   color: var(--color-ink);
 }
 .btn-ghost:hover:not(:disabled) {
-  border-color: rgba(70, 224, 208, 0.45);
-  color: var(--color-ink-blue);
+  border-color: #33475c;
+  background: rgba(255, 255, 255, 0.04);
 }
 .btn-danger {
   color: #1a0505;
@@ -118,8 +121,7 @@ body > * {
 
 .card {
   @apply rounded-2xl;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)) ,
-    var(--color-surface);
+  background-color: var(--color-surface);
   border: 1px solid var(--color-line);
   box-shadow: var(--shadow-card);
 }

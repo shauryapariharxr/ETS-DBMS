@@ -7,7 +7,7 @@
 // A session advisory lock serialises concurrent instances, and every step is
 // idempotent, so restarts and extra replicas are safe.
 import { AUTO_MIGRATE } from "./config.js";
-import { ensureAdminAccount } from "./bootstrap.js";
+import { ensureAdminAccount, ensureScannerAccount } from "./bootstrap.js";
 import { pool } from "./db.js";
 import { runMigrations } from "./migrations.js";
 
@@ -30,6 +30,7 @@ export async function ensureDatabaseSchema() {
     }
 
     await ensureAdminAccount(client);
+    await ensureScannerAccount(client);
   } finally {
     await client.query("SELECT pg_advisory_unlock($1::bigint)", [SETUP_LOCK_KEY]).catch(() => {});
     client.release();

@@ -80,7 +80,9 @@ export default function ScanPortal() {
     <div className="flex min-h-screen flex-col bg-warm-ivory">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
-          <Link href="/admin" className="font-display font-semibold">← StagePass Gate</Link>
+          <Link href="/" className="font-display font-semibold">
+            ← StagePass Gate
+          </Link>
           <span className="text-sm text-ink-soft">{user.full_name} · {gate}</span>
         </div>
       </header>

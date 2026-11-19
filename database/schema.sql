@@ -1,20 +1,27 @@
--- ============================================================================
--- StagePass — Event Ticketing & Seating
--- PostgreSQL schema (single-file import for the project report / fresh database)
--- Generated from src/db/migrations; run `npm run db:migrate` for the app itself.
---
--- 10 related tables: users, venues, seats, events, ticket_tiers, seat_holds,
---                    tickets, payments, scans, refunds, audit_logs
--- Primary keys, foreign keys, CHECK constraints and a partial unique index
--- enforce the 10 business rules described in README.md.
--- ============================================================================
+-- StagePass — complete PostgreSQL schema (single file, for submission/import).
+-- Generated from the ordered migrations in src/db/migrations; applying this file to
+-- an empty database produces exactly the schema the API expects.
+
+-- ===== 001_init.sql =====
+-- StagePass schema. Business-rule enforcement notes:
+-- Rule 1  events.venue_id NOT NULL FK + CHECK(ends_at > starts_at)
+-- Rule 2  seats UNIQUE(venue_id, section, row_label, seat_number)
+-- Rule 3  tickets UNIQUE(event_id, seat_id) -- stricter than a partial index: a seat is
+--         blocked the moment a pending ticket exists; the sweeper cancels stale pendings.
+-- Rule 4  tickets stores base_price/tax_amount/fee_amount/total_price snapshots at purchase
+-- Rule 5  tickets.status starts 'pending'; flips 'active' only in the payment transaction
+-- Rule 6  tickets.ticket_number UNIQUE + tickets.qr_code UNIQUE
+-- Rule 7  scans + events.reentry_allowed; scan service rejects a 2nd granted scan unless allowed
+-- Rule 8  events.status 'cancelled' gates sales; cancelEvent creates refunds rows
+-- Rule 9  seat_holds.expires_at; node-cron sweeper releases them
+-- Rule 10 audit_logs is append-only (no UPDATE/DELETE paths in the app)
 
 BEGIN;
 
 CREATE TABLE users (
   id            BIGSERIAL PRIMARY KEY,
   email         TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,                       -- bcrypt hash, never plain text
+  password_hash TEXT NOT NULL,
   full_name     TEXT NOT NULL,
   role          TEXT NOT NULL DEFAULT 'customer'
                 CHECK (role IN ('customer','organizer','admin','scanner')),
@@ -36,7 +43,7 @@ CREATE TABLE seats (
   row_label   TEXT NOT NULL,
   seat_number INT  NOT NULL CHECK (seat_number > 0),
   tier_name   TEXT NOT NULL DEFAULT 'Standard',
-  UNIQUE (venue_id, section, row_label, seat_number)   -- Rule 2
+  UNIQUE (venue_id, section, row_label, seat_number)  -- Rule 2
 );
 CREATE INDEX seats_venue_idx ON seats(venue_id);
 
@@ -52,9 +59,8 @@ CREATE TABLE events (
                   CHECK (status IN ('scheduled','cancelled','completed')),
   reentry_allowed BOOLEAN NOT NULL DEFAULT FALSE,          -- Rule 7
   entry_gate      TEXT,
-  banner_url      TEXT,                                    -- uploaded via multer
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT events_time_order CHECK (ends_at > starts_at)  -- Rule 1
+  CONSTRAINT events_time_order CHECK (ends_at > starts_at) -- Rule 1
 );
 CREATE INDEX events_starts_idx ON events(starts_at);
 CREATE INDEX events_status_idx ON events(status);
@@ -80,7 +86,7 @@ CREATE TABLE seat_holds (
   user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (event_id, seat_id)                               -- Rule 9
+  UNIQUE (event_id, seat_id)                                -- one live hold per seat/event
 );
 CREATE INDEX seat_holds_expiry_idx ON seat_holds(expires_at);
 
@@ -90,24 +96,19 @@ CREATE TABLE tickets (
   seat_id       BIGINT NOT NULL REFERENCES seats(id),
   tier_id       BIGINT NOT NULL REFERENCES ticket_tiers(id),
   user_id       BIGINT NOT NULL REFERENCES users(id),
-  ticket_number TEXT NOT NULL UNIQUE,                      -- Rule 6
-  qr_code       TEXT NOT NULL UNIQUE,                      -- Rule 6
+  ticket_number TEXT NOT NULL UNIQUE,                       -- Rule 6
+  qr_code       TEXT NOT NULL UNIQUE,                       -- Rule 6
   status        TEXT NOT NULL DEFAULT 'pending'
                 CHECK (status IN ('pending','active','used','cancelled')),
-  base_price    NUMERIC(10,2) NOT NULL,                    -- Rule 4 snapshot
+  base_price    NUMERIC(10,2) NOT NULL,                     -- Rule 4 snapshot
   tax_amount    NUMERIC(10,2) NOT NULL,
   fee_amount    NUMERIC(10,2) NOT NULL,
   total_price   NUMERIC(10,2) NOT NULL,
-  issued_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+  issued_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT tickets_unique_seat_per_event UNIQUE (event_id, seat_id)  -- Rule 3
 );
-CREATE INDEX tickets_user_idx  ON tickets(user_id);
+CREATE INDEX tickets_user_idx ON tickets(user_id);
 CREATE INDEX tickets_event_idx ON tickets(event_id);
-
--- Rule 3: only live tickets block a seat, so cancelled sales free the seat
--- while the ticket/payment rows stay for the audit trail.
-CREATE UNIQUE INDEX tickets_event_seat_live_idx
-  ON tickets (event_id, seat_id)
-  WHERE status IN ('pending', 'active', 'used');
 
 CREATE TABLE payments (
   id           BIGSERIAL PRIMARY KEY,
@@ -125,7 +126,7 @@ CREATE INDEX payments_ticket_idx ON payments(ticket_id);
 
 CREATE TABLE scans (
   id         BIGSERIAL PRIMARY KEY,
-  ticket_id  BIGINT REFERENCES tickets(id),   -- nullable: unknown codes are logged too
+  ticket_id  BIGINT NOT NULL REFERENCES tickets(id),
   gate_id    TEXT NOT NULL,
   scanned_by BIGINT REFERENCES users(id),
   result     TEXT NOT NULL CHECK (result IN ('granted','denied')),
@@ -144,7 +145,7 @@ CREATE TABLE refunds (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE audit_logs (                      -- Rule 10 (append-only)
+CREATE TABLE audit_logs (                                   -- Rule 10
   id          BIGSERIAL PRIMARY KEY,
   actor_id    BIGINT REFERENCES users(id),
   action      TEXT NOT NULL,
@@ -159,7 +160,51 @@ CREATE INDEX audit_created_idx ON audit_logs(created_at);
 
 COMMIT;
 
--- Sample JOIN query used by the storefront (requirement: at least one JOIN).
--- SELECT e.id, e.title, v.name AS venue, v.city
--- FROM events e JOIN venues v ON v.id = e.venue_id
--- WHERE e.status = 'scheduled' ORDER BY e.starts_at;
+-- ===== 002_partial_unique.sql =====
+-- Rule 3 refinement: only LIVE tickets (pending/active/used) block a seat.
+-- Cancelled tickets stop blocking so failed/cancelled purchases free the seat,
+-- while the ticket and payment rows remain for audit (Rule 10).
+ALTER TABLE tickets DROP CONSTRAINT tickets_unique_seat_per_event;
+
+CREATE UNIQUE INDEX tickets_event_seat_live_idx
+  ON tickets (event_id, seat_id)
+  WHERE status IN ('pending', 'active', 'used');
+
+-- ===== 003_scans_nullable.sql =====
+-- Unknown QR codes must still be audit-logged (Rule 10), so scans.ticket_id becomes nullable.
+ALTER TABLE scans ALTER COLUMN ticket_id DROP NOT NULL;
+
+-- ===== 004_event_banner.sql =====
+-- File upload feature: an event can show a banner image uploaded through the API (multer).
+ALTER TABLE events ADD COLUMN banner_url TEXT;
+
+-- ===== 005_remove_demo_data.sql =====
+-- Production cleanup: remove the demo catalogue and demo accounts that earlier
+-- versions of the seed script installed on every fresh database.
+--
+-- Runs once (tracked in schema_migrations) and is a no-op on a database that
+-- never had demo data. The schema itself is untouched, so events, venues and
+-- customers can be created normally afterwards.
+
+TRUNCATE TABLE
+  refunds,
+  scans,
+  payments,
+  seat_holds,
+  tickets,
+  audit_logs,
+  ticket_tiers,
+  events,
+  seats,
+  venues
+  RESTART IDENTITY CASCADE;
+
+DELETE FROM users
+ WHERE email IN (
+   'admin@stagepass.test',
+   'customer@stagepass.test',
+   'scanner@stagepass.test',
+   'organizer@stagepass.test',
+   'test.visitor+buffy@example.com'
+ );
+

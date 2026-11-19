@@ -5,6 +5,8 @@ import {
   ADMIN_EMAIL,
   ADMIN_PASSWORD,
   AUTO_MIGRATE,
+  SCANNER_EMAIL,
+  SCANNER_PASSWORD,
   CORS_ALLOW_ANY,
   CORS_ORIGINS,
   NODE_ENV,
@@ -98,7 +100,7 @@ app.use(errorHandler); // central error handler (must be last)
 
 async function start() {
   // ---- Fresh-deployment bootstrap: create tables and the first admin before serving ----
-  if (AUTO_MIGRATE || (ADMIN_EMAIL && ADMIN_PASSWORD)) {
+  if (AUTO_MIGRATE || (ADMIN_EMAIL && ADMIN_PASSWORD) || (SCANNER_EMAIL && SCANNER_PASSWORD)) {
     try {
       await ensureDatabaseSchema();
     } catch (error) {

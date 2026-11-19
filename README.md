@@ -74,10 +74,13 @@ The frontend proxies `/api/v1/*` and `/uploads/*` to the API (`next.config.ts` r
 httpOnly JWT cookie stays first-party. The browser can also call the API directly — CORS allows
 `FRONTEND_ORIGIN`.
 
-### Create the admin account
-Set both variables on the API (`ADMIN_EMAIL`, `ADMIN_PASSWORD` — at least 8 characters) and it is
-created on boot, or promoted if it already exists. Nothing is seeded: a fresh database starts
-empty, so add your venues and events from the admin panel.
+### Create the staff accounts
+Set `ADMIN_EMAIL` + `ADMIN_PASSWORD` on the API (password: at least 8 characters) and the admin is
+created on boot, or promoted if it already exists. Set `SCANNER_EMAIL` + `SCANNER_PASSWORD` the
+same way to create the gate account (`role: scanner`) that signs in at `/login` and validates
+tickets at `/scan`. Both are idempotent. Nothing is seeded: a fresh database starts empty, so add
+your venues and events from the admin panel — an admin can also create more staff accounts under
+**Admin → Users**.
 
 Want local demo fixtures for development? `npm run db:seed` is a **local-only** helper that
 inserts four test accounts and a sample catalogue. It is never run at boot or in production.
@@ -126,8 +129,9 @@ event-ticketing-system/
 │   ├── lib/queries.ts          calls the Express API (no direct DB access in the UI)
 │   ├── middleware.ts           role gating for /admin and /scan
 │   └── db/migrations/          numbered SQL migrations
-├── database/schema.sql         single-file PostgreSQL schema for submission/import
-├── scripts/                    migrate, seed, db server control, e2e suite
+├── database/schema.sql         single-file PostgreSQL schema (generated from the migrations)
+├── docs/                       design system notes + the PBL project report (.docx)
+├── scripts/                    migrate, seed, staff bootstrap, db server control, e2e suite
 └── .env.example                every environment variable
 ```
 
@@ -288,6 +292,7 @@ then run `npm run db:migrate` in its shell.
 | `JWT_EXPIRES_IN`, `HOLD_MINUTES_DEFAULT` | no | token lifetime and seat-hold window |
 | `DB_AUTO_MIGRATE` | production | apply pending migrations on boot |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production | first admin account, created on boot |
+| `SCANNER_EMAIL` / `SCANNER_PASSWORD` | optional | gate-staff account (`role: scanner`), created on boot |
 | `UPLOAD_DIR` | no | uploads folder on a mounted persistent disk |
 
 **Uploads on a hosted API:** container filesystems are ephemeral, so uploaded banners vanish on
@@ -296,9 +301,14 @@ or move the upload to object storage.
 
 ### Submission checklist
 The report/PPT must list the live frontend URL, the API base URL (`https://…/api/v1`) and the GitHub
-repository, plus one login per role:
-`admin@stagepass.test / Admin@123` · `organizer@stagepass.test / Organizer@123` ·
-`customer@stagepass.test / Customer@123` · `scanner@stagepass.test / Scanner@123`.
+repository, plus one login per role. Demo accounts no longer exist — use the accounts you configured
+in the environment:
+
+| Role | Where it signs in | How it is created |
+|---|---|---|
+| Admin | `/admin` | `ADMIN_EMAIL` / `ADMIN_PASSWORD` on boot |
+| Scanner (gate staff) | `/scan` | `SCANNER_EMAIL` / `SCANNER_PASSWORD` on boot, or Admin → Users |
+| Customer | `/tickets` | self-registration at `/register` |
 
 ---
 
@@ -310,7 +320,7 @@ repository, plus one login per role:
 
 ## 📚 Docs
 
-- [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) — architecture, schema, phases
-- [`DESIGN.md`](./DESIGN.md) — colour system, typography, component specs
+- [`docs/StagePass-PBL-Report.docx`](./docs/StagePass-PBL-Report.docx) — full project report (tech stack, architecture, database design, API, deployment)
+- [`docs/design.md`](./docs/design.md) — colour system, typography, component specs
 - [`database/schema.sql`](./database/schema.sql) — complete PostgreSQL schema
 - [`render.yaml`](./render.yaml) · [`Dockerfile`](./Dockerfile) — API + PostgreSQL hosting config

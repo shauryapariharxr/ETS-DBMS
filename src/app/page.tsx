@@ -18,6 +18,8 @@ function fmtDate(d: string) {
   });
 }
 
+const money = (value: number | string) => `₹${Number(value).toLocaleString("en-IN")}`;
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -31,63 +33,82 @@ export default async function HomePage({
     getEventList({ q: sp.q, city: sp.city, category: sp.category, page, limit: 9 }),
   ]);
 
+  const filtered = Boolean(sp.q || sp.city || sp.category);
+
   const pageHref = (target: number) => {
     const params = new URLSearchParams();
     if (sp.q) params.set("q", sp.q);
     if (sp.city) params.set("city", sp.city);
     if (sp.category) params.set("category", sp.category);
     params.set("page", String(target));
-    return `/?${params.toString()}`;
+    return `/?${params.toString()}#events`;
   };
 
   return (
     <div className="flex min-h-screen flex-col">
       <Header session={session} />
 
-      {/* Hero */}
       <section className="relative overflow-hidden border-b border-line">
-        <div className="grid-lines pointer-events-none absolute inset-0 opacity-70" />
-        <div className="pointer-events-none absolute -top-56 left-1/2 h-[38rem] w-[38rem] -translate-x-1/2 rounded-full bg-ink-blue/15 blur-[130px]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:py-24">
-          <p className="mono-label">Live ticketing infrastructure</p>
-          <h1 className="mt-5 max-w-3xl font-display text-4xl font-bold leading-[1.03] tracking-tight sm:text-6xl">
-            Find your seat.{" "}
-            <span className="bg-gradient-to-r from-ink-blue via-sky-teal to-ink-blue bg-clip-text text-transparent">
-              Keep the memory.
-            </span>
-          </h1>
-          <p className="mt-5 max-w-xl text-base text-ink-soft">
-            Interactive seat maps, prices locked at checkout and QR entry at the gate —
-            backed by a REST API and PostgreSQL.
+        <div className="grid-lines pointer-events-none absolute inset-0 opacity-30" />
+        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-16 sm:px-6 sm:pb-24 sm:pt-24">
+          <p className="mono-label flex items-center gap-2">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-ink-blue" />
+            Seat-level ticketing
           </p>
 
-          <dl className="mt-8 flex flex-wrap gap-3">
+          <h1 className="mt-6 max-w-3xl font-display text-4xl font-semibold leading-[1.04] tracking-[-0.025em] sm:text-6xl">
+            Find your seat.
+            <br />
+            <span className="text-ink-soft">Keep the memory.</span>
+          </h1>
+
+          <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-ink-soft">
+            Pick the exact seat on a live map, pay once at checkout and walk in with a QR ticket.
+            Prices are locked the moment you reserve.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <a href="#events" className="btn-primary">
+              Browse events
+            </a>
+            <Link href={session ? "/tickets" : "/login"} className="btn-ghost">
+              {session ? "My tickets" : "I have a ticket"}
+            </Link>
+          </div>
+
+          <dl className="mt-14 grid max-w-md grid-cols-3 divide-x divide-line border-t border-line pt-6">
             {[
-              { label: "Events live", value: pagination.total },
-              { label: "Cities", value: cities.length },
+              { label: "Events live", value: String(pagination.total) },
+              { label: "Cities", value: String(cities.length) },
               { label: "Entry", value: "QR" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-xl border border-line bg-surface/70 px-4 py-3 backdrop-blur"
-              >
-                <dt className="mono-label">{stat.label}</dt>
-                <dd className="tnum mt-1.5 font-display text-lg font-semibold text-ink">{stat.value}</dd>
+            ].map((stat, i) => (
+              <div key={stat.label} className={i === 0 ? "pr-5" : "px-5"}>
+                <dd className="tnum font-display text-2xl font-semibold text-ink">{stat.value}</dd>
+                <dt className="mono-label mt-1.5 text-ink-soft">{stat.label}</dt>
               </div>
             ))}
           </dl>
+        </div>
+      </section>
 
-          <form
-            action="/"
-            className="mt-8 flex flex-wrap gap-2 rounded-2xl border border-line bg-surface/80 p-3 backdrop-blur"
-          >
+      <main id="events" className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6">
+        <div className="flex flex-col gap-5 border-b border-line pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="font-display text-xl font-semibold tracking-tight">Upcoming events</h2>
+            <p className="mt-1 text-[13px] text-ink-soft">
+              {pagination.total} {pagination.total === 1 ? "event" : "events"} on sale
+              {filtered ? " matching your filters" : ""}
+            </p>
+          </div>
+
+          <form action="/" className="flex flex-wrap items-center gap-2">
             <input
               name="q"
               defaultValue={sp.q}
-              placeholder="Search events…"
-              className="input max-w-xs border-transparent bg-transparent"
+              placeholder="Search events"
+              className="input max-w-[220px]"
             />
-            <select name="city" defaultValue={sp.city ?? ""} className="input max-w-[160px] border-transparent bg-transparent">
+            <select name="city" defaultValue={sp.city ?? ""} className="input max-w-[150px]">
               <option value="">All cities</option>
               {cities.map((city) => (
                 <option key={city} value={city}>
@@ -98,7 +119,7 @@ export default async function HomePage({
             <select
               name="category"
               defaultValue={sp.category ?? ""}
-              className="input max-w-[150px] border-transparent bg-transparent"
+              className="input max-w-[150px]"
             >
               <option value="">All categories</option>
               {CATEGORIES.map((category) => (
@@ -107,88 +128,89 @@ export default async function HomePage({
                 </option>
               ))}
             </select>
-            <button className="btn-primary" type="submit">
-              Search
+            <button className="btn-ghost btn-sm" type="submit">
+              Filter
             </button>
+            {filtered && (
+              <Link href="/#events" className="text-[13px] text-ink-soft hover:text-ink">
+                Reset
+              </Link>
+            )}
           </form>
-        </div>
-      </section>
-
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <h2 className="font-display text-xl font-semibold">
-            Upcoming events{" "}
-            <span className="text-sm font-normal text-ink-soft">
-              ({pagination.total})
-            </span>
-          </h2>
-          {(sp.q || sp.city || sp.category) && (
-            <Link href="/" className="text-sm text-ink-blue hover:underline">
-              Clear filters
-            </Link>
-          )}
         </div>
 
         {events.length === 0 ? (
-          <div className="card p-12 text-center text-ink-soft">
-            {sp.q || sp.city || sp.category ? (
+          <div className="card mt-8 px-8 py-20 text-center">
+            <p className="mono-label">Catalogue</p>
+            {filtered ? (
               <>
-                No events match your filters.{" "}
-                <Link href="/" className="text-ink-blue hover:underline">
-                  Reset
+                <p className="mt-4 font-display text-lg font-semibold text-ink">
+                  Nothing matches those filters
+                </p>
+                <p className="mt-1 text-sm text-ink-soft">Try another city or category.</p>
+                <Link href="/#events" className="btn-ghost mt-6">
+                  Clear filters
                 </Link>
               </>
             ) : (
               <>
-                <span className="mono-label">Catalogue</span>
-                <p className="mt-3 font-display text-lg font-semibold text-ink">No events on sale yet</p>
-                <p className="mt-1 text-sm">New shows appear here as soon as they are published.</p>
+                <p className="mt-4 font-display text-lg font-semibold text-ink">
+                  No events on sale yet
+                </p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  New shows appear here as soon as they are published.
+                </p>
               </>
             )}
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => (
               <Link
                 key={event.id}
                 href={`/events/${event.id}`}
-                className="card group overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+                className="card group flex flex-col overflow-hidden transition-colors duration-200 hover:border-[#2a3d51]"
               >
-                <div className="relative flex h-32 items-end bg-gradient-to-br from-ink-blue/25 via-sky-teal/10 to-transparent p-4">
-                  <div className="grid-lines absolute inset-0 opacity-70" />
-                  <div className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full border border-ink-blue/20 bg-ink-blue/5" />
-                  <div className="pointer-events-none absolute right-6 top-6 h-16 w-16 rounded-full border border-sky-teal/20" />
+                <div className="relative h-40 overflow-hidden border-b border-line">
+                  <div className="grid-lines absolute inset-0 opacity-30" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-warm-ivory/90 via-transparent to-transparent" />
                   {event.banner_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={event.banner_url}
                       alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-cover opacity-80 transition duration-300 group-hover:opacity-100"
                     />
                   ) : null}
-                  <span className="chip relative border border-ink-blue/30 bg-[#05070b]/85 text-ink-blue backdrop-blur">
+                  <span className="chip absolute left-4 top-4 border border-line bg-warm-ivory/85 text-ink-soft backdrop-blur">
                     {event.category}
                   </span>
+                  <span className="mono-label absolute bottom-3 left-4 text-ink-soft">
+                    {fmtDate(event.starts_at)}
+                  </span>
                 </div>
-                <div className="p-5">
-                  <h3 className="font-display text-lg font-semibold leading-snug transition group-hover:text-ink-blue">
+
+                <div className="flex flex-1 flex-col p-5">
+                  <h3 className="font-display text-[17px] font-semibold leading-snug">
                     {event.title}
                   </h3>
-                  <p className="mt-1 text-sm text-ink-soft">
-                    {fmtDate(event.starts_at)} · {event.venue_name}, {event.city}
+                  <p className="mt-1 text-[13px] text-ink-soft">
+                    {event.venue_name}, {event.city}
                   </p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="tnum text-sm font-semibold text-ink-blue">
-                      {event.min_price
-                        ? `from ₹${Number(event.min_price).toLocaleString("en-IN")}`
-                        : "Free"}
-                    </span>
-                    <span className="text-xs text-ink-soft">
-                      {event.capacity - event.tickets_sold} seats left
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <StatusChip status={event.status} />
+
+                  <div className="mt-auto flex items-end justify-between pt-6">
+                    <div>
+                      <p className="mono-label text-ink-soft">From</p>
+                      <p className="tnum mt-1 font-display text-base font-semibold text-ink">
+                        {event.min_price ? money(event.min_price) : "Free"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <StatusChip status={event.status} />
+                      <p className="mt-2 text-xs text-ink-soft">
+                        {event.capacity - event.tickets_sold} seats left
+                      </p>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -197,23 +219,23 @@ export default async function HomePage({
         )}
 
         {pagination.pages > 1 && (
-          <nav className="mt-8 flex items-center justify-between text-sm" aria-label="Pagination">
+          <nav className="mt-10 flex items-center justify-between text-sm" aria-label="Pagination">
             {pagination.page > 1 ? (
-              <Link href={pageHref(pagination.page - 1)} className="btn-ghost">
+              <Link href={pageHref(pagination.page - 1)} className="btn-ghost btn-sm">
                 ← Previous
               </Link>
             ) : (
-              <span className="btn-ghost pointer-events-none opacity-40">← Previous</span>
+              <span className="btn-ghost btn-sm pointer-events-none opacity-40">← Previous</span>
             )}
-            <span className="tnum text-ink-soft">
+            <span className="tnum text-[13px] text-ink-soft">
               Page {pagination.page} of {pagination.pages}
             </span>
             {pagination.page < pagination.pages ? (
-              <Link href={pageHref(pagination.page + 1)} className="btn-ghost">
+              <Link href={pageHref(pagination.page + 1)} className="btn-ghost btn-sm">
                 Next →
               </Link>
             ) : (
-              <span className="btn-ghost pointer-events-none opacity-40">Next →</span>
+              <span className="btn-ghost btn-sm pointer-events-none opacity-40">Next →</span>
             )}
           </nav>
         )}
