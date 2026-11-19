@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
 
 export type Role = "customer" | "organizer" | "admin" | "scanner";
 export const COOKIE_NAME = "sp_session";
@@ -11,35 +10,35 @@ export interface SessionUser {
   role: Role;
 }
 
-function secret(): Uint8Array {
-  return new TextEncoder().encode(
-    process.env.JWT_SECRET ?? "sp_dev_fallback_secret"
-  );
-}
+/** Express API origin — mirrors src/lib/queries.ts. */
+const API_URL = (
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://127.0.0.1:4000"
+).replace(/\/+$/, "");
 
 /**
- * Verifies the HS256 token issued by the Express API (`server/auth.js`).
- * Must stay compatible with that payload (sub, email, role, full_name/name).
+ * Session for server components.
+ *
+ * The Express API signs the token and is the only process holding JWT_SECRET,
+ * so it is also the only thing that validates it: ask `/api/v1/auth/me` with the
+ * cookie rather than verifying locally. Holding a copy of the signing key in the
+ * frontend deployment made every protected page bounce to /login whenever the
+ * two secrets differed.
  */
-export async function verifyToken(token: string): Promise<SessionUser | null> {
+export async function getSessionUser(): Promise<SessionUser | null> {
+  const store = await cookies();
+  if (!store.get(COOKIE_NAME)) return null;
+
   try {
-    const { payload } = await jwtVerify(token, secret());
-    if (!payload.sub || typeof payload.role !== "string") return null;
-    return {
-      id: Number(payload.sub),
-      email: String(payload.email ?? ""),
-      full_name: String(payload.full_name ?? payload.name ?? ""),
-      role: payload.role as Role,
-    };
+    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+      headers: { cookie: store.toString() },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { user?: SessionUser };
+    return data.user ?? null;
   } catch {
     return null;
   }
-}
-
-/** Session for server components — set by the Express API login endpoint. */
-export async function getSessionUser(): Promise<SessionUser | null> {
-  const store = await cookies();
-  const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifyToken(token);
 }
