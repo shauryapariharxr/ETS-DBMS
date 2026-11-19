@@ -131,10 +131,20 @@ export default async function HomePage({
 
         {events.length === 0 ? (
           <div className="card p-12 text-center text-ink-soft">
-            No events match your filters.{" "}
-            <Link href="/" className="text-ink-blue hover:underline">
-              Reset
-            </Link>
+            {sp.q || sp.city || sp.category ? (
+              <>
+                No events match your filters.{" "}
+                <Link href="/" className="text-ink-blue hover:underline">
+                  Reset
+                </Link>
+              </>
+            ) : (
+              <>
+                <span className="mono-label">Catalogue</span>
+                <p className="mt-3 font-display text-lg font-semibold text-ink">No events on sale yet</p>
+                <p className="mt-1 text-sm">New shows appear here as soon as they are published.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
