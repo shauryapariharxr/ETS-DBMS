@@ -81,7 +81,9 @@ empty, so add your venues and events from the admin panel.
 
 Want local demo fixtures for development? `npm run db:seed` is a **local-only** helper that
 inserts four test accounts and a sample catalogue. It is never run at boot or in production.
-The fourth demo account is the gate scanner (`scanner@stagepass.test`).
+The fourth demo account is the gate scanner (`scanner@stagepass.test`). Seeding clears the demo
+tables but never touches the configured admin: any account matching `ADMIN_EMAIL` is preserved and
+can still sign in afterwards.
 
 ### Verify
 ```bash

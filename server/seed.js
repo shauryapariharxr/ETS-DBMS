@@ -51,15 +51,22 @@ const EVENTS = [
 
 /**
  * Inserts the demo dataset (4 users, 2 venues with seats, 4 events, tiers and a
- * few sample tickets). Pass `reset: true` to truncate the app tables first.
+ * few sample tickets). Pass `reset: true` to clear the app tables first.
+ *
+ * Accounts listed in `keepEmails` (typically ADMIN_EMAIL) are never deleted, so a
+ * local seed run cannot lock you out of the real admin account. The demo users are
+ * upserted, so re-seeding keeps working without touching that admin.
  */
-export async function seedDemoData(client, { reset = false } = {}) {
+export async function seedDemoData(client, { reset = false, keepEmails = [] } = {}) {
   const c = client;
+  const keep = keepEmails.map((email) => String(email ?? "").trim().toLowerCase()).filter(Boolean);
   await c.query("BEGIN");
   try {
     if (reset) {
       await c.query(`TRUNCATE audit_logs, refunds, scans, payments, tickets, seat_holds,
-                     ticket_tiers, events, seats, venues, users RESTART IDENTITY CASCADE`);
+                     ticket_tiers, events, seats, venues RESTART IDENTITY CASCADE`);
+      // Only demo/test users are removed; the configured admin survives the reset.
+      await c.query(`DELETE FROM users WHERE lower(email) <> ALL($1::text[])`, [keep]);
     }
 
     // Users
@@ -67,7 +74,12 @@ export async function seedDemoData(client, { reset = false } = {}) {
     const userIds = {};
     for (const [email, password, name, role] of DEMO_ACCOUNTS) {
       const { rows } = await c.query(
-        "INSERT INTO users(email,password_hash,full_name,role) VALUES ($1,$2,$3,$4) RETURNING id",
+        `INSERT INTO users(email,password_hash,full_name,role) VALUES ($1,$2,$3,$4)
+         ON CONFLICT (email) DO UPDATE
+           SET password_hash = EXCLUDED.password_hash,
+               full_name = EXCLUDED.full_name,
+               role = EXCLUDED.role
+         RETURNING id`,
         [email, hash(password), name, role]
       );
       userIds[role] = rows[0].id;
