@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed": "node scripts/db-seed.mjs",
+    "db:admin": "node scripts/db-admin.mjs",
     "db:sweep": "node scripts/db-sweep.mjs",
     "db:start": "node scripts/db-server.mjs start",
     "db:stop": "node scripts/db-server.mjs stop",

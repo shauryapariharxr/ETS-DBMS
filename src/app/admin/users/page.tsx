@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
           </thead>
           <tbody>
             {(users ?? []).map((user) => (
-              <tr key={user.id} className="border-t border-line hover:bg-warm-ivory/60">
+              <tr key={user.id} className="border-t border-line hover:bg-mint-mist/40">
                 <td className="px-5 py-3.5">
                   <p className="font-medium">{user.full_name}</p>
                   <p className="text-xs text-ink-soft">{user.email}</p>

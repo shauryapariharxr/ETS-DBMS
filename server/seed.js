@@ -1,4 +1,6 @@
-// Demo dataset shared by `npm run db:seed` and the automatic first-boot setup.
+// Local development only: `npm run db:seed` inserts four test accounts and a sample
+// catalogue. Never called at boot — production data is created through the admin UI,
+// and the first admin comes from ADMIN_EMAIL/ADMIN_PASSWORD (see server/bootstrap.js).
 // Works on a caller-supplied client and imports no config/pool, so both the CLI
 // script and the running API can use it.
 import crypto from "node:crypto";

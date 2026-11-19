@@ -4,10 +4,10 @@
 # select the repository. Render reads this file, creates the database and the
 # web service, and wires DATABASE_URL automatically.
 #
-# The first boot creates the schema and the demo data automatically
-# (DB_AUTO_MIGRATE / DB_AUTO_SEED below), so no Shell step is needed. Both are
-# idempotent: later deploys only apply migrations that are still pending and
-# never touch existing users.
+# The first boot applies the schema and creates the admin account from the
+# ADMIN_EMAIL / ADMIN_PASSWORD you set in the dashboard, so no Shell step is
+# needed. Both are idempotent: later deploys only apply pending migrations and
+# never touch existing data.
 #
 # After the first deploy, set FRONTEND_ORIGIN to the deployed frontend origin
 # and redeploy.
@@ -42,12 +42,15 @@ services:
         value: 7d
       - key: HOLD_MINUTES_DEFAULT
         value: "10"
-      # Fresh-deploy bootstrap: apply pending migrations, then seed the demo
-      # dataset only when the users table is empty.
+      # Fresh-deploy bootstrap: apply pending migrations, then create (or
+      # promote) the admin account below.
       - key: DB_AUTO_MIGRATE
         value: "true"
-      - key: DB_AUTO_SEED
-        value: "true"
+      # Set these in the dashboard — the first deploy creates the admin account.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
       # Set this in the dashboard, e.g. https://stagepass.vercel.app
       # Comma-separate multiple origins if you use a custom domain too.
       - key: FRONTEND_ORIGIN

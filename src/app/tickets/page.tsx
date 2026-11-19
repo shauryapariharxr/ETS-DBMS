@@ -113,9 +113,9 @@ function TicketsList({ session }: { session: SessionUser | null }) {
       <div className="grid gap-5 sm:grid-cols-2">
         {tickets.map((t) => (
           <article key={t.id} className="card overflow-hidden">
-            <div className="bg-gradient-to-r from-ink-blue to-sky-teal px-5 py-4 text-white">
+            <div className="border-b border-line bg-[radial-gradient(120%_120%_at_0%_0%,rgba(70,224,208,0.16),transparent_62%)] px-5 py-4">
               <p className="font-display font-semibold leading-snug">{t.event_title}</p>
-              <p className="mt-0.5 text-xs text-white/85">
+              <p className="mt-0.5 text-xs text-ink-soft">
                 {fmtDate(t.starts_at)} · {t.venue_name}, {t.city}
               </p>
             </div>

@@ -6,29 +6,30 @@ A modern, clean interface that keeps the focus on **events and seats**: generous
 
 ## 1. Color System
 
-Anchor color from the brief: `#66A3BF`. Adjacent bands in the palette image were sampled as best-effort approximations — they are defined as tokens so they can be swapped in one place (`src/app/globals.css`).
+Dark deep-tech palette (plasma cyan on near-black), inspired by fusion-energy brand sites: a near-black canvas, hairline cyan borders, a soft ambient glow behind the page and a faint engineering grid behind hero and panel headers. Tokens live in `src/app/globals.css` and keep the original semantic names, so a re-skin is still a one-file change.
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--ink-blue` | `#2B5E8C` | Primary brand: headers, primary buttons, active nav, links |
-| `--sky-teal` | `#66A3BF` | Secondary: seat-available, highlights, icons, focus rings, charts |
-| `--mint-mist` | `#D9E8E3` | Backgrounds: page sections, cards, seat-sold contrast, success tints |
-| `--warm-ivory` | `#F7F3EC` | App background, neutral surfaces |
-| `--surface` | `#FFFFFF` | Cards, modals, inputs |
-| `--text-primary` | `#1F2A33` | Headings, body |
-| `--text-secondary` | `#5B6B76` | Captions, meta |
-| `--danger` | `#C0504D` | Errors, denied scans, cancel-event |
-| `--warning` | `#D9A441` | Holds counting down, pending payments |
-| `--success` | `#3E8E6E` | Granted scans, paid, confirmed |
+| `--warm-ivory` | `#05070B` | App canvas (near-black) |
+| `--surface` | `#090F16` | Cards, panels, sidebar, inputs |
+| `--mint-mist` | `#101B26` | Raised fills, seat-available, hover rows |
+| `--line` | `#1B2836` | Hairline borders and dividers |
+| `--ink-blue` (plasma) | `#46E0D0` | Primary accent: links, active nav, primary button gradient start |
+| `--sky-teal` (ion) | `#5AA9FF` | Secondary accent: gradients, charts, focus rings |
+| `--ink` | `#E8F1F8` | Headings and body text |
+| `--ink-soft` | `#90A4B6` | Captions, meta, table headers |
+| `--danger` | `#FF6B6B` | Errors, denied scans, cancel event |
+| `--warning` | `#F5C451` | Holds counting down, pending payments |
+| `--success` | `#3DDC97` | Granted scans, paid, confirmed |
 
 **Semantic mapping (core UX device):** seat states use the palette directly —
-- Available: `--surface` with `--sky-teal` border
-- Selected: `--ink-blue` fill, white icon
-- Held (someone else): `--mint-mist` fill, disabled
-- Sold: `--text-secondary` at 25% opacity, not clickable
+- Available: `--mint-mist` fill with a `--sky-teal` border
+- Selected: `--ink-blue` fill with near-black label
+- Held (someone else): `--mint-mist` fill, disabled, dimmed label
+- Sold: `--ink-soft` at 25% opacity, not clickable
 - Tier tiers are differentiated by *shape/row group + legend*, not new hues (keeps the palette clean).
 
-Dark text on light surfaces maintains ≥ 4.5:1 contrast (WCAG AA). `--ink-blue` on `--warm-ivory` ≈ 5.6:1.
+Accent on canvas (`#46E0D0` on `#05070B`) ≈ 11:1, and body text (`#E8F1F8` on `#090F16`) ≈ 15:1 — comfortably above WCAG AA. Primary buttons use dark text on the cyan gradient for the same reason.
 
 ## 2. Typography
 

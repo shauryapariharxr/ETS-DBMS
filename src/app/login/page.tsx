@@ -34,72 +34,83 @@ function LoginForm() {
     router.refresh();
   }
 
-  function quickFill(em: string, pw: string) {
-    setEmail(em);
-    setPassword(pw);
-  }
-
   return (
-    <div className="card w-full max-w-md p-8">
-      <h1 className="font-display text-2xl font-bold">Welcome back</h1>
-      <p className="mt-1 text-sm text-ink-soft">Sign in to book seats and manage events.</p>
-
-      {params.get("denied") && (
-        <p className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-          You don&apos;t have access to that area.
-        </p>
-      )}
-      {error && (
-        <p className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
-      )}
-
-      <form onSubmit={submit} className="mt-6 space-y-4">
-        <div>
-          <label className="label" htmlFor="email">Email</label>
-          <input id="email" type="email" required className="input" value={email}
-                 onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-        </div>
-        <div>
-          <label className="label" htmlFor="password">Password</label>
-          <input id="password" type="password" required className="input" value={password}
-                 onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
-        </div>
-        <button className="btn-primary w-full" disabled={busy} type="submit">
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
-
-      <div className="mt-6 rounded-xl bg-mint-mist/60 p-4 text-xs">
-        <p className="font-medium text-ink-soft">Demo accounts</p>
-        <div className="mt-2 grid gap-1.5">
-          <button type="button" className="text-left hover:text-ink-blue" onClick={() => quickFill("admin@stagepass.test", "Admin@123")}>
-            👩‍💼 admin@stagepass.test · Admin@123
-          </button>
-          <button type="button" className="text-left hover:text-ink-blue" onClick={() => quickFill("customer@stagepass.test", "Customer@123")}>
-            🧑 customer@stagepass.test · Customer@123
-          </button>
-          <button type="button" className="text-left hover:text-ink-blue" onClick={() => quickFill("scanner@stagepass.test", "Scanner@123")}>
-            🎫 scanner@stagepass.test · Scanner@123
-          </button>
-          <button type="button" className="text-left hover:text-ink-blue" onClick={() => quickFill("organizer@stagepass.test", "Organizer@123")}>
-            🎬 organizer@stagepass.test · Organizer@123
-          </button>
-        </div>
+    <div className="w-full max-w-md">
+      <div className="mb-8 flex items-center gap-2.5">
+        <span className="grid h-10 w-10 place-items-center rounded-xl border border-ink-blue/40 bg-ink-blue/10 font-display text-lg font-bold text-ink-blue shadow-[0_0_26px_rgba(70,224,208,0.28)]">
+          S
+        </span>
+        <span className="font-display text-lg font-semibold tracking-tight">StagePass</span>
       </div>
 
-      <p className="mt-6 text-center text-sm text-ink-soft">
-        New here?{" "}
-        <Link href="/register" className="font-medium text-ink-blue hover:underline">
-          Create an account
-        </Link>
-      </p>
+      <div className="card p-8">
+        <p className="mono-label">Member access</p>
+        <h1 className="mt-3 font-display text-2xl font-bold">Welcome back</h1>
+        <p className="mt-1 text-sm text-ink-soft">Sign in to book seats and manage events.</p>
+
+        {params.get("denied") && (
+          <p className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+            You don&apos;t have access to that area.
+          </p>
+        )}
+        {error && (
+          <p className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+            {error}
+          </p>
+        )}
+
+        <form onSubmit={submit} className="mt-6 space-y-4">
+          <div>
+            <label className="label" htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              className="input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+          <button className="btn-primary w-full" disabled={busy} type="submit">
+            {busy ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-ink-soft">
+          New here?{" "}
+          <Link href="/register" className="font-medium text-ink-blue hover:underline">
+            Create an account
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-mint-mist px-4 py-10">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
+      <div className="grid-lines pointer-events-none absolute inset-0 opacity-60" />
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-ink-blue/10 blur-[120px]" />
       <Suspense>
         <LoginForm />
       </Suspense>

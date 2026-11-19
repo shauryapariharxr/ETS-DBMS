@@ -21,7 +21,10 @@ if (!DATABASE_URL) {
 
 /** Boot-time database bootstrap for fresh deployments — see server/setup.js. */
 export const AUTO_MIGRATE = process.env.DB_AUTO_MIGRATE === "true";
-export const AUTO_SEED = process.env.DB_AUTO_SEED === "true";
+
+/** First admin account, created at boot when both are set — see server/bootstrap.js. */
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 export const JWT_SECRET = process.env.JWT_SECRET || "sp_dev_fallback_secret";
 export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";

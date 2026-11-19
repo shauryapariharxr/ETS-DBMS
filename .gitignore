@@ -18,3 +18,5 @@ server/uploads/*
 *.tsbuildinfo
 *.log
 .freebuff
+.logs/
+.preview/

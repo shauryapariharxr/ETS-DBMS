@@ -30,10 +30,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           ← All events
         </Link>
 
-        <div className="mt-4 overflow-hidden rounded-2xl bg-gradient-to-br from-ink-blue via-ink-blue to-sky-teal p-8 text-white">
-          <span className="chip bg-white/90 text-ink-blue">{event.category}</span>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-surface bg-[radial-gradient(120%_120%_at_0%_0%,rgba(70,224,208,0.16),transparent_62%)] p-8">
+          <span className="chip border border-ink-blue/30 bg-ink-blue/10 text-ink-blue">{event.category}</span>
           <h1 className="mt-3 font-display text-3xl font-bold">{event.title}</h1>
-          <p className="mt-2 max-w-2xl text-white/85">{event.description}</p>
+          <p className="mt-2 max-w-2xl text-ink-soft">{event.description}</p>
           <div className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm">
             <span>📅 {fmtDate(event.starts_at)}</span>
             <span>📍 {event.venue_name}, {event.city}</span>

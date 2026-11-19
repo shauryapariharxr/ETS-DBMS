@@ -507,7 +507,7 @@ export default function AdminEventsPage() {
           </thead>
           <tbody>
             {(events ?? []).map((event) => (
-              <tr key={event.id} className="border-t border-line hover:bg-warm-ivory/60">
+              <tr key={event.id} className="border-t border-line hover:bg-mint-mist/40">
                 <td className="px-5 py-3.5">
                   <Link href={`/events/${event.id}`} className="font-medium hover:text-ink-blue">
                     {event.title}

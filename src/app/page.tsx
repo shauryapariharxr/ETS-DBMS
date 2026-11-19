@@ -45,27 +45,49 @@ export default async function HomePage({
       <Header session={session} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-r from-ink-blue to-sky-teal text-white">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <h1 className="font-display text-3xl font-bold sm:text-4xl">
-            Find your seat. Keep the memory.
+      <section className="relative overflow-hidden border-b border-line">
+        <div className="grid-lines pointer-events-none absolute inset-0 opacity-70" />
+        <div className="pointer-events-none absolute -top-56 left-1/2 h-[38rem] w-[38rem] -translate-x-1/2 rounded-full bg-ink-blue/15 blur-[130px]" />
+        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:py-24">
+          <p className="mono-label">Live ticketing infrastructure</p>
+          <h1 className="mt-5 max-w-3xl font-display text-4xl font-bold leading-[1.03] tracking-tight sm:text-6xl">
+            Find your seat.{" "}
+            <span className="bg-gradient-to-r from-ink-blue via-sky-teal to-ink-blue bg-clip-text text-transparent">
+              Keep the memory.
+            </span>
           </h1>
-          <p className="mt-2 max-w-xl text-white/85">
-            Interactive seat maps, fair pricing locked at checkout, and QR entry — all backed by an
-            Express REST API on PostgreSQL.
+          <p className="mt-5 max-w-xl text-base text-ink-soft">
+            Interactive seat maps, prices locked at checkout and QR entry at the gate —
+            backed by a REST API and PostgreSQL.
           </p>
-          <form action="/" className="mt-6 flex flex-wrap gap-2">
+
+          <dl className="mt-8 flex flex-wrap gap-3">
+            {[
+              { label: "Events live", value: pagination.total },
+              { label: "Cities", value: cities.length },
+              { label: "Entry", value: "QR" },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl border border-line bg-surface/70 px-4 py-3 backdrop-blur"
+              >
+                <dt className="mono-label">{stat.label}</dt>
+                <dd className="tnum mt-1.5 font-display text-lg font-semibold text-ink">{stat.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <form
+            action="/"
+            className="mt-8 flex flex-wrap gap-2 rounded-2xl border border-line bg-surface/80 p-3 backdrop-blur"
+          >
             <input
               name="q"
               defaultValue={sp.q}
               placeholder="Search events…"
-              className="input max-w-xs border-transparent text-ink"
+              className="input max-w-xs border-transparent bg-transparent"
             />
-            <select
-              name="city"
-              defaultValue={sp.city ?? ""}
-              className="input max-w-[160px] border-transparent text-ink"
-            >
+            <select name="city" defaultValue={sp.city ?? ""} className="input max-w-[160px] border-transparent bg-transparent">
               <option value="">All cities</option>
               {cities.map((city) => (
                 <option key={city} value={city}>
@@ -76,7 +98,7 @@ export default async function HomePage({
             <select
               name="category"
               defaultValue={sp.category ?? ""}
-              className="input max-w-[150px] border-transparent text-ink"
+              className="input max-w-[150px] border-transparent bg-transparent"
             >
               <option value="">All categories</option>
               {CATEGORIES.map((category) => (
@@ -85,7 +107,7 @@ export default async function HomePage({
                 </option>
               ))}
             </select>
-            <button className="btn bg-white font-semibold text-ink-blue hover:bg-mint-mist" type="submit">
+            <button className="btn-primary" type="submit">
               Search
             </button>
           </form>
@@ -93,7 +115,7 @@ export default async function HomePage({
       </section>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-end justify-between gap-4">
           <h2 className="font-display text-xl font-semibold">
             Upcoming events{" "}
             <span className="text-sm font-normal text-ink-soft">
@@ -120,9 +142,12 @@ export default async function HomePage({
               <Link
                 key={event.id}
                 href={`/events/${event.id}`}
-                className="card group overflow-hidden transition hover:shadow-[var(--shadow-lift)]"
+                className="card group overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
               >
-                <div className="relative flex h-28 items-end bg-gradient-to-br from-ink-blue to-sky-teal p-4">
+                <div className="relative flex h-32 items-end bg-gradient-to-br from-ink-blue/25 via-sky-teal/10 to-transparent p-4">
+                  <div className="grid-lines absolute inset-0 opacity-70" />
+                  <div className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full border border-ink-blue/20 bg-ink-blue/5" />
+                  <div className="pointer-events-none absolute right-6 top-6 h-16 w-16 rounded-full border border-sky-teal/20" />
                   {event.banner_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -131,10 +156,12 @@ export default async function HomePage({
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                   ) : null}
-                  <span className="chip relative bg-white/90 text-ink-blue">{event.category}</span>
+                  <span className="chip relative border border-ink-blue/30 bg-[#05070b]/85 text-ink-blue backdrop-blur">
+                    {event.category}
+                  </span>
                 </div>
                 <div className="p-5">
-                  <h3 className="font-display text-lg font-semibold leading-snug group-hover:text-ink-blue">
+                  <h3 className="font-display text-lg font-semibold leading-snug transition group-hover:text-ink-blue">
                     {event.title}
                   </h3>
                   <p className="mt-1 text-sm text-ink-soft">

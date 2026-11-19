@@ -73,7 +73,9 @@ export default function AdminDashboard() {
         <section className="card p-6">
           <h2 className="font-display text-lg font-semibold">Revenue — last 14 days</h2>
           {stats.series.every((s) => Number(s.total) === 0) ? (
-            <p className="mt-8 text-center text-sm text-ink-soft">No sales in this window yet.</p>
+            <div className="mt-6 flex h-40 items-end gap-1.5 rounded-xl border border-dashed border-line/70 p-3">
+              <p className="m-auto text-sm text-ink-soft">No sales in this window yet.</p>
+            </div>
           ) : (
             <div className="mt-6 flex h-40 items-end gap-1.5">
               {stats.series.map((s) => {
@@ -81,7 +83,7 @@ export default function AdminDashboard() {
                 return (
                   <div key={s.day} className="group relative flex-1">
                     <div className="rounded-t-md bg-sky-teal transition group-hover:bg-ink-blue" style={{ height: `${h}%` }} />
-                    <span className="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 text-[10px] text-white group-hover:block">
+                    <span className="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded border border-line bg-[#05070b] px-1.5 py-0.5 text-[10px] text-ink group-hover:block">
                       {s.day.slice(5)} · ₹{Number(s.total).toLocaleString("en-IN")}
                     </span>
                   </div>
@@ -105,8 +107,11 @@ export default function AdminDashboard() {
                     </td>
                     <td className="tnum w-24 py-2.5 text-right text-xs text-ink-soft">{o.sold}/{o.capacity}</td>
                     <td className="w-28 py-2.5">
-                      <div className="h-2 rounded-full bg-mint-mist">
-                        <div className="h-2 rounded-full bg-ink-blue" style={{ width: `${pct}%` }} />
+                      <div className="h-2 overflow-hidden rounded-full bg-line/60">
+                        <div
+                          className="h-2 rounded-full bg-gradient-to-r from-ink-blue to-sky-teal"
+                          style={{ width: `${pct}%` }}
+                        />
                       </div>
                     </td>
                   </tr>

@@ -63,7 +63,6 @@ Using your own PostgreSQL? Create a `stagepass` database and point `DATABASE_URL
 npm install
 cp .env.example .env       # then adjust DATABASE_URL / JWT_SECRET if needed
 npm run db:migrate         # applies src/db/migrations/*.sql in order
-npm run db:seed            # demo users, venues, seats, events, tiers, tickets
 ```
 
 ### 3. Run both servers (two terminals)
@@ -75,13 +74,14 @@ The frontend proxies `/api/v1/*` and `/uploads/*` to the API (`next.config.ts` r
 httpOnly JWT cookie stays first-party. The browser can also call the API directly — CORS allows
 `FRONTEND_ORIGIN`.
 
-### Demo accounts (from seed)
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@stagepass.test` | `Admin@123` |
-| Organizer | `organizer@stagepass.test` | `Organizer@123` |
-| Customer | `customer@stagepass.test` | `Customer@123` |
-| Scanner (gate) | `scanner@stagepass.test` | `Scanner@123` |
+### Create the admin account
+Set both variables on the API (`ADMIN_EMAIL`, `ADMIN_PASSWORD` — at least 8 characters) and it is
+created on boot, or promoted if it already exists. Nothing is seeded: a fresh database starts
+empty, so add your venues and events from the admin panel.
+
+Want local demo fixtures for development? `npm run db:seed` is a **local-only** helper that
+inserts four test accounts and a sample catalogue. It is never run at boot or in production.
+The fourth demo account is the gate scanner (`scanner@stagepass.test`).
 
 ### Verify
 ```bash
@@ -231,17 +231,18 @@ variables for a Vercel frontend.
 1. Push this repo to GitHub.
 2. Render Dashboard → **New → Blueprint** → pick the repository. Render reads `render.yaml` and creates
    `stagepass-api` (health check `/api/v1/health`) plus `stagepass-db`, wiring `DATABASE_URL` automatically.
-3. That is it — no Shell step. On the first boot the API reads `DB_AUTO_MIGRATE=true` and
-   `DB_AUTO_SEED=true` from `render.yaml`, applies the pending migrations from
-   `src/db/migrations`, and seeds the demo dataset (only when the `users` table is empty).
-   The log shows `[setup] schema ready …` and `[setup] demo data seeded: …`; later deploys
-   print `schema up to date` and `skipping demo seed`, so restarts never duplicate data.
+3. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (plus `ADMIN_NAME` if you like) in the service's
+   **Environment** tab. No Shell step is needed: on the first boot the API reads
+   `DB_AUTO_MIGRATE=true` from `render.yaml`, applies the pending migrations from
+   `src/db/migrations`, then creates the admin account. The log shows
+   `[setup] schema ready …` and `[setup] admin account created: …`; later deploys print
+   `schema up to date` and `admin account already present`, so restarts never duplicate data.
    Both steps take a session advisory lock, so extra instances cannot race.
 4. Copy the service URL (e.g. `https://stagepass-api.onrender.com`) and confirm
    `https://…/api/v1/health` returns `{"status":"ok","database":"connected"}`.
 
-   Prefer to do it by hand? Set both flags to `false` and run `npm run db:migrate` /
-   `npm run db:seed` in the service Shell or against any `DATABASE_URL`.
+   Prefer to do it by hand? Set `DB_AUTO_MIGRATE=false` and run `npm run db:migrate` plus
+   `npm run db:admin` in the service Shell or against any `DATABASE_URL`.
 
 > Free instances sleep when idle, so the first request can take ~30–50 s. Render's free
 > PostgreSQL expires after 30 days — swap `DATABASE_URL` for Neon/Railway/Aiven before then.
@@ -271,7 +272,8 @@ then run `npm run db:migrate` in its shell.
 - On Render set `FRONTEND_ORIGIN=https://stagepass.vercel.app` (comma-separated if you add a custom
   domain) and redeploy. That is the CORS allowlist — without it, direct browser calls to the API
   return `403 CORS_BLOCKED`.
-- Sign in on the live frontend with `admin@stagepass.test / Admin@123` and check the dashboard loads.
+- Sign in on the live frontend with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` you configured and check
+  the dashboard loads.
 
 ### API environment variables
 | Variable | Required | Purpose |
@@ -283,7 +285,7 @@ then run `npm run db:migrate` in its shell.
 | `COOKIE_SAMESITE` / `COOKIE_SECURE` | production | `none` + `true` for cross-site cookie use |
 | `JWT_EXPIRES_IN`, `HOLD_MINUTES_DEFAULT` | no | token lifetime and seat-hold window |
 | `DB_AUTO_MIGRATE` | production | apply pending migrations on boot |
-| `DB_AUTO_SEED` | production | seed demo data when `users` is empty |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | production | first admin account, created on boot |
 | `UPLOAD_DIR` | no | uploads folder on a mounted persistent disk |
 
 **Uploads on a hosted API:** container filesystems are ephemeral, so uploaded banners vanish on

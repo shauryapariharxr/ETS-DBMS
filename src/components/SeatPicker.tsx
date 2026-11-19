@@ -190,12 +190,12 @@ export default function SeatPicker({
     const isSelected = selected.has(s.id);
     const disabled = s.state === "sold" || s.state === "held" || holds !== null || booked;
     const cls = isSelected
-      ? "bg-ink-blue text-white border-ink-blue scale-105"
+      ? "bg-ink-blue text-[#03110f] border-ink-blue scale-105"
       : s.state === "sold"
         ? "bg-ink-soft/25 border-transparent text-transparent"
         : s.state === "held"
           ? "bg-mint-mist border-mint-mist"
-          : "bg-white border-sky-teal hover:border-ink-blue";
+          : "bg-mint-mist border-sky-teal/50 hover:border-ink-blue hover:bg-ink-blue/15";
     return (
       <button
         key={s.id}
@@ -222,7 +222,7 @@ export default function SeatPicker({
 
         {/* Legend */}
         <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-ink-soft">
-          <span className="flex items-center gap-1.5"><i className="h-3.5 w-3.5 rounded border border-sky-teal bg-white" /> Available</span>
+          <span className="flex items-center gap-1.5"><i className="h-3.5 w-3.5 rounded border border-sky-teal/60 bg-mint-mist" /> Available</span>
           <span className="flex items-center gap-1.5"><i className="h-3.5 w-3.5 rounded bg-ink-blue" /> Selected</span>
           <span className="flex items-center gap-1.5"><i className="h-3.5 w-3.5 rounded bg-mint-mist" /> Held</span>
           <span className="flex items-center gap-1.5"><i className="h-3.5 w-3.5 rounded bg-ink-soft/25" /> Sold</span>
@@ -231,7 +231,7 @@ export default function SeatPicker({
 
         {/* Map */}
         <div className="card mt-4 overflow-x-auto p-6">
-          <div className="mx-auto mb-6 w-3/4 rounded-b-2xl bg-gradient-to-r from-ink-blue to-sky-teal py-1.5 text-center text-xs font-medium uppercase tracking-widest text-white">
+          <div className="mx-auto mb-6 w-3/4 rounded-b-2xl bg-gradient-to-r from-ink-blue/70 to-sky-teal/70 py-1.5 text-center text-xs font-medium uppercase tracking-widest text-[#03110f]">
             Stage
           </div>
           {loading ? (

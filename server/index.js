@@ -2,8 +2,9 @@ import express from "express";
 import cors from "cors";
 import cron from "node-cron";
 import {
+  ADMIN_EMAIL,
+  ADMIN_PASSWORD,
   AUTO_MIGRATE,
-  AUTO_SEED,
   CORS_ALLOW_ANY,
   CORS_ORIGINS,
   NODE_ENV,
@@ -96,8 +97,8 @@ app.use(notFoundHandler); // 404 for unknown routes
 app.use(errorHandler); // central error handler (must be last)
 
 async function start() {
-  // ---- Fresh-deployment bootstrap: create tables (and demo data) before serving ----
-  if (AUTO_MIGRATE || AUTO_SEED) {
+  // ---- Fresh-deployment bootstrap: create tables and the first admin before serving ----
+  if (AUTO_MIGRATE || (ADMIN_EMAIL && ADMIN_PASSWORD)) {
     try {
       await ensureDatabaseSchema();
     } catch (error) {

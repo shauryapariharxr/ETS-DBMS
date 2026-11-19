@@ -93,7 +93,7 @@ export default function AuditPage() {
           </thead>
           <tbody>
             {filtered.map((l) => (
-              <tr key={l.id} className="border-t border-line align-top hover:bg-warm-ivory/60">
+              <tr key={l.id} className="border-t border-line align-top hover:bg-mint-mist/40">
                 <td className="tnum whitespace-nowrap px-5 py-3 text-ink-soft">{fmt(l.created_at)}</td>
                 <td className="px-5 py-3">{l.actor ?? "system"}</td>
                 <td className="px-5 py-3">

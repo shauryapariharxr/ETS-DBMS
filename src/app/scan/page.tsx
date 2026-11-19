@@ -78,7 +78,7 @@ export default function ScanPortal() {
 
   return (
     <div className="flex min-h-screen flex-col bg-warm-ivory">
-      <header className="border-b border-line bg-white">
+      <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Link href="/admin" className="font-display font-semibold">← StagePass Gate</Link>
           <span className="text-sm text-ink-soft">{user.full_name} · {gate}</span>
@@ -107,7 +107,7 @@ export default function ScanPortal() {
         </div>
 
         {verdict && (
-          <div className={`mt-6 rounded-2xl p-8 text-center text-white ${granted ? "bg-success" : "bg-danger"}`}>
+          <div className={`mt-6 rounded-2xl border p-8 text-center ${granted ? "border-success/40 bg-success/10 text-success" : "border-danger/40 bg-danger/10 text-danger"}`}>
             <p className="font-display text-4xl font-bold">{granted ? "✓ ENTRY GRANTED" : "✕ DENIED"}</p>
             {!granted && <p className="mt-2 text-lg font-medium">{verdict.reason}</p>}
             {granted && verdict.ticket && (
@@ -115,7 +115,7 @@ export default function ScanPortal() {
                 <p className="font-mono">{verdict.ticket.ticket_number}</p>
                 <p className="mt-1 text-lg font-semibold">{verdict.ticket.holder}</p>
                 <p>{verdict.ticket.section} · Row {verdict.ticket.row_label} · Seat {verdict.ticket.seat_number} · {verdict.ticket.tier}</p>
-                <p className="mt-1 text-white/85">{verdict.event?.title}</p>
+                <p className="mt-1 text-ink-soft">{verdict.event?.title}</p>
               </div>
             )}
           </div>

@@ -132,15 +132,15 @@ export default function AdminVenuesPage() {
                 <span className="chip bg-mint-mist text-ink-blue">#{v.id}</span>
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-                <div className="rounded-lg bg-warm-ivory py-2">
+                <div className="rounded-lg bg-mint-mist/60 py-2">
                   <p className="tnum font-semibold">{v.seats}</p>
                   <p className="text-xs text-ink-soft">seats</p>
                 </div>
-                <div className="rounded-lg bg-warm-ivory py-2">
+                <div className="rounded-lg bg-mint-mist/60 py-2">
                   <p className="tnum font-semibold">{v.sections}</p>
                   <p className="text-xs text-ink-soft">sections</p>
                 </div>
-                <div className="rounded-lg bg-warm-ivory py-2">
+                <div className="rounded-lg bg-mint-mist/60 py-2">
                   <p className="tnum font-semibold">{v.capacity}</p>
                   <p className="text-xs text-ink-soft">capacity</p>
                 </div>
