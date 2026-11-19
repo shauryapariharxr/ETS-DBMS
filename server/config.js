@@ -40,7 +40,8 @@ export const CORS_ORIGINS = (
   process.env.FRONTEND_ORIGIN || "http://localhost:3000,http://127.0.0.1:3000"
 )
   .split(",")
-  .map((origin) => origin.trim())
+  // Browsers send "scheme://host" with no trailing slash, so tolerate "https://app.example/" too.
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 export const CORS_ALLOW_ANY = process.env.CORS_ALLOW_ANY === "true";
 
