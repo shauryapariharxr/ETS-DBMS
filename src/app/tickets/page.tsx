@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Footer, Header, StatusChip } from "@/components/ui";
 import type { SessionUser } from "@/lib/auth";
+import { fmtEventDate } from "@/lib/datetime";
 
 interface Ticket {
   id: number;
@@ -24,7 +25,7 @@ interface Ticket {
 }
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleString("en-IN", {
+  return fmtEventDate(d, {
     weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
   });
 }

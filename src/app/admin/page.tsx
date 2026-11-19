@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { fmtEventDate } from "@/lib/datetime";
 
 interface Stats {
   revenue: string;
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
                   <tr key={o.id} className="border-b border-line last:border-0">
                     <td className="py-2.5 pr-3">
                       <Link href={`/events/${o.id}`} className="font-medium hover:text-ink-blue">{o.title}</Link>
-                      <p className="text-xs text-ink-soft">{new Date(o.starts_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+                      <p className="text-xs text-ink-soft">{fmtEventDate(o.starts_at, { day: "numeric", month: "short" })}</p>
                     </td>
                     <td className="tnum w-24 py-2.5 text-right text-xs text-ink-soft">{o.sold}/{o.capacity}</td>
                     <td className="w-28 py-2.5">

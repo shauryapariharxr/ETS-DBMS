@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { StatusChip } from "@/components/ui";
+import { fmtEventDate, fromWallClockInput, toWallClockInput } from "@/lib/datetime";
 
 interface EventRow {
   id: number;
@@ -127,8 +128,8 @@ export default function AdminEventsPage() {
       title: detail.title,
       description: detail.description ?? "",
       category: detail.category,
-      starts_at: toLocalInput(new Date(detail.starts_at)),
-      ends_at: toLocalInput(new Date(detail.ends_at)),
+      starts_at: toWallClockInput(detail.starts_at),
+      ends_at: toWallClockInput(detail.ends_at),
       reentry_allowed: detail.reentry_allowed,
       entry_gate: detail.entry_gate ?? "",
     });
@@ -158,8 +159,8 @@ export default function AdminEventsPage() {
       const uploadedBanner = await uploadBanner();
       const payload = {
         ...form,
-        starts_at: new Date(form.starts_at).toISOString(),
-        ends_at: new Date(form.ends_at).toISOString(),
+        starts_at: fromWallClockInput(form.starts_at),
+        ends_at: fromWallClockInput(form.ends_at),
         entry_gate: form.entry_gate || null,
         banner_url: uploadedBanner,
         ...(editingId ? {} : { tiers }),
@@ -249,7 +250,7 @@ export default function AdminEventsPage() {
   }
 
   const fmt = (d: string) =>
-    new Date(d).toLocaleString("en-IN", {
+    fmtEventDate(d, {
       day: "numeric",
       month: "short",
       hour: "2-digit",

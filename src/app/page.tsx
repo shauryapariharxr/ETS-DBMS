@@ -2,13 +2,14 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { getEventList } from "@/lib/queries";
 import { Footer, Header, StatusChip } from "@/components/ui";
+import { fmtEventDate } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
 
 const CATEGORIES = ["Music", "Comedy", "Tech", "Theatre", "Sports"];
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleString("en-IN", {
+  return fmtEventDate(d, {
     weekday: "short",
     day: "numeric",
     month: "short",

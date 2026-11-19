@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getEvent } from "@/lib/queries";
 import { Footer, Header, StatusChip } from "@/components/ui";
+import { fmtEventDate } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleString("en-IN", {
+  return fmtEventDate(d, {
     weekday: "long",
     day: "numeric",
     month: "long",
