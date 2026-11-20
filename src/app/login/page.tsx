@@ -112,6 +112,10 @@ function LoginForm() {
             Create an account
           </Link>
         </p>
+        <p className="mt-3 border-t border-line/70 pt-3 text-center text-[11.5px] leading-relaxed text-ink-soft/80">
+          Organiser or gate staff? Sign in with your staff account — admin logins open the
+          console automatically.
+        </p>
       </div>
     </div>
   );

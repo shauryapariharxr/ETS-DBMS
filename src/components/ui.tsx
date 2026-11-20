@@ -186,6 +186,7 @@ const FOOTER_COLUMNS = [
       { href: "/contact", label: "Contact us" },
       { href: "/refund-policy", label: "Request a refund" },
       { href: "/terms#entry", label: "Entry & ticket rules" },
+      { href: "/login", label: "Staff sign in" },
     ],
   },
 ];

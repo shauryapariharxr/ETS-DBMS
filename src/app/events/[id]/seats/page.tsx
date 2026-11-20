@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getEvent } from "@/lib/queries";
 import SeatPicker from "@/components/SeatPicker";
-import { Footer, Header } from "@/components/ui";
+import { Header } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,10 @@ export default async function SeatSelectionPage({ params }: { params: Promise<{ 
           tiers={event.tiers.map((t) => ({ name: t.name, base_price: Number(t.base_price), tax_rate: Number(t.tax_rate), fee_amount: Number(t.fee_amount) }))}
         />
       </main>
-      <Footer />
+      {/* Checkout step: keep the site chrome out of the way while seats are picked. */}
+      <div className="border-t border-line/70 py-5 text-center text-[12px] text-ink-soft">
+        Secure checkout · StagePass · Seats are held for 10 minutes
+      </div>
     </div>
   );
 }

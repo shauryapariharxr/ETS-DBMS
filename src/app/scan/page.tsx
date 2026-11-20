@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Footer } from "@/components/ui";
 
 interface Verdict {
   result: "granted" | "denied";
@@ -78,12 +77,25 @@ export default function ScanPortal() {
 
   return (
     <div className="flex min-h-screen flex-col bg-warm-ivory">
+      {/* Staff tool, not a marketing page: its own compact bar and no site footer. */}
       <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
+        <div className="mx-auto flex min-h-14 max-w-3xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
           <Link href="/" className="font-display font-semibold">
             ← StagePass Gate
           </Link>
-          <span className="text-sm text-ink-soft">{user.full_name} · {gate}</span>
+          {user.role === "admin" && (
+            <Link href="/admin" className="text-[13px] font-medium text-ink-soft hover:text-ink">
+              Admin console
+            </Link>
+          )}
+          <span className="ml-auto whitespace-nowrap text-sm text-ink-soft">
+            {user.full_name} · {gate}
+          </span>
+          <form action="/logout">
+            <button type="submit" className="text-[13px] font-medium text-ink-soft hover:text-ink">
+              Sign out
+            </button>
+          </form>
         </div>
       </header>
 
@@ -143,7 +155,6 @@ export default function ScanPortal() {
           </div>
         )}
       </main>
-      <Footer />
     </div>
   );
 }
