@@ -29,6 +29,12 @@ export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 export const SCANNER_EMAIL = process.env.SCANNER_EMAIL;
 export const SCANNER_PASSWORD = process.env.SCANNER_PASSWORD;
 
+/**
+ * Insert the demo catalogue (venues, seats, events, tiers) when the database has
+ * no events yet. Runs once per empty database; disable with SEED_DEMO_DATA=false.
+ */
+export const SEED_DEMO_DATA = process.env.SEED_DEMO_DATA !== "false";
+
 export const JWT_SECRET = process.env.JWT_SECRET || "sp_dev_fallback_secret";
 export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 

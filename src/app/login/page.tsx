@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { LogoMark } from "@/components/ui";
 
 function LoginForm() {
   const router = useRouter();
@@ -37,9 +38,7 @@ function LoginForm() {
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 flex items-center gap-2.5">
-        <span className="grid h-10 w-10 place-items-center rounded-xl border border-ink-blue/40 bg-ink-blue/10 font-display text-lg font-bold text-ink-blue shadow-[0_0_26px_rgba(70,224,208,0.28)]">
-          S
-        </span>
+        <LogoMark className="h-9 w-9" />
         <span className="font-display text-lg font-semibold tracking-tight">StagePass</span>
       </div>
 
@@ -111,6 +110,7 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
       <div className="grid-lines pointer-events-none absolute inset-0 opacity-60" />
       <div className="pointer-events-none absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-ink-blue/10 blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-52 right-0 h-[28rem] w-[28rem] rounded-full bg-sky-teal/10 blur-[130px]" />
       <Suspense>
         <LoginForm />
       </Suspense>

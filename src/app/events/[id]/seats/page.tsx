@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getEvent } from "@/lib/queries";
 import SeatPicker from "@/components/SeatPicker";
-import { Footer } from "@/components/ui";
+import { Footer, Header } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,8 @@ export default async function SeatSelectionPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex min-h-screen flex-col">
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <Header session={session} />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         <SeatPicker
           eventId={eventId}
           eventTitle={event.title}

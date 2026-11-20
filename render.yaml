@@ -56,6 +56,9 @@ services:
         sync: false
       - key: SCANNER_PASSWORD
         sync: false
+      # Storefront demo catalogue for an empty database (once, then no-op).
+      - key: SEED_DEMO_DATA
+        value: "true"
       # Set this in the dashboard, e.g. https://stagepass.vercel.app
       # Comma-separate multiple origins if you use a custom domain too.
       - key: FRONTEND_ORIGIN

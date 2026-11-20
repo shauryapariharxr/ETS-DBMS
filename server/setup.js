@@ -8,6 +8,7 @@
 // idempotent, so restarts and extra replicas are safe.
 import { AUTO_MIGRATE } from "./config.js";
 import { ensureAdminAccount, ensureScannerAccount } from "./bootstrap.js";
+import { seedDemoCatalogue } from "./demo-catalogue.js";
 import { pool } from "./db.js";
 import { runMigrations } from "./migrations.js";
 
@@ -31,6 +32,14 @@ export async function ensureDatabaseSchema() {
 
     await ensureAdminAccount(client);
     await ensureScannerAccount(client);
+
+    // Storefront content for a brand-new database (no-op once events exist).
+    const demo = await seedDemoCatalogue(client);
+    if (demo.seeded) {
+      console.log(
+        `[setup] demo catalogue seeded: ${demo.events} events, ${demo.venues} venues, ${demo.seats} seats`
+      );
+    }
   } finally {
     await client.query("SELECT pg_advisory_unlock($1::bigint)", [SETUP_LOCK_KEY]).catch(() => {});
     client.release();
