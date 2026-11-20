@@ -78,9 +78,12 @@ export function Header({ session }: { session: SessionUser | null }) {
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             {session ? (
               <>
-                <span className="hidden max-w-[90px] truncate pr-1 text-[13px] text-ink-soft sm:inline">
+                <Link
+                  href="/account"
+                  className="hidden max-w-[90px] truncate pr-1 text-[13px] text-ink-soft transition-colors hover:text-ink sm:inline"
+                >
                   {session.full_name.split(" ")[0]}
-                </span>
+                </Link>
                 <form action="/logout" className="hidden sm:block">
                   <button type="submit" className={`${NAV_LINK} cursor-pointer`}>
                     Sign out

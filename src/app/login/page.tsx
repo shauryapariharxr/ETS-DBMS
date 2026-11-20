@@ -1,38 +1,50 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogoMark } from "@/components/ui";
+import { ApiError, postJson, warmUpApi } from "@/lib/client-api";
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const nextUrl = params.get("next") ?? "/";
+  const nextUrl = params.get("next") ?? "/account";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    warmUpApi();
+    // Already signed in? Go straight to the member area, not the login form.
+    fetch("/api/v1/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) router.replace("/account");
+      })
+      .catch(() => {});
+  }, [router]);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
+
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/v1/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setError(data.error ?? "Login failed");
-      return;
+
+    try {
+      const data = await postJson<{ user: { role: string } }>("/api/v1/auth/login", {
+        email: email.trim(),
+        password,
+      });
+      const dest = data.user.role === "admin" && nextUrl === "/account" ? "/admin" : nextUrl;
+      router.push(dest);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Sign in failed. Please try again.");
+      setBusy(false);
     }
-    const dest =
-      data.user.role === "admin" && nextUrl === "/" ? "/admin" : nextUrl;
-    router.push(dest);
-    router.refresh();
   }
 
   return (
@@ -44,7 +56,7 @@ function LoginForm() {
 
       <div className="card p-8">
         <p className="mono-label">Member access</p>
-        <h1 className="mt-3 font-display text-2xl font-bold">Welcome back</h1>
+        <h1 className="mt-3 font-display text-2xl font-semibold">Welcome back</h1>
         <p className="mt-1 text-sm text-ink-soft">Sign in to book seats and manage events.</p>
 
         {params.get("denied") && (

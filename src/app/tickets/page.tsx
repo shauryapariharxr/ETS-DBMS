@@ -3,8 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Footer, Header, StatusChip } from "@/components/ui";
-import type { SessionUser } from "@/lib/auth";
+import { StatusChip } from "@/components/ui";
+import { AccountShell, type AccountUser } from "@/components/account-shell";
 import { fmtEventDate } from "@/lib/datetime";
 
 interface Ticket {
@@ -30,7 +30,7 @@ function fmtDate(d: string) {
   });
 }
 
-function TicketsList({ session }: { session: SessionUser | null }) {
+function TicketsList({ session }: { session: AccountUser | null }) {
   const params = useSearchParams();
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [transferring, setTransferring] = useState<number | null>(null);
@@ -156,7 +156,7 @@ function TicketsList({ session }: { session: SessionUser | null }) {
 }
 
 export default function TicketsPage() {
-  const [session, setSession] = useState<SessionUser | null>(null);
+  const [session, setSession] = useState<AccountUser | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -166,19 +166,39 @@ export default function TicketsPage() {
       .finally(() => setLoaded(true));
   }, []);
 
+  if (!loaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="mono-label">Loading your tickets…</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="card w-full max-w-md p-8 text-center">
+          <p className="mono-label">Members only</p>
+          <h1 className="mt-3 font-display text-xl font-semibold">Sign in for your tickets</h1>
+          <p className="mt-1 text-sm text-ink-soft">Your QR codes live in the member area.</p>
+          <Link href="/login?next=/tickets" className="btn-primary mt-5">
+            Sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header session={session} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
-        <h1 className="font-display text-2xl font-bold">My Tickets</h1>
-        <p className="mb-6 text-sm text-ink-soft">Show the QR at the gate — one scan per ticket.</p>
-        {loaded && (
-          <Suspense>
-            <TicketsList session={session} />
-          </Suspense>
-        )}
-      </main>
-      <Footer />
-    </div>
+    <AccountShell user={session}>
+      <div className="mb-6">
+        <p className="mono-label">My tickets</p>
+        <h1 className="mt-2 font-display text-[26px] font-semibold leading-tight">Your entry passes</h1>
+        <p className="mt-1 text-[13.5px] text-ink-soft">Show the QR at the gate — one scan per ticket.</p>
+      </div>
+      <Suspense>
+        <TicketsList session={session} />
+      </Suspense>
+    </AccountShell>
   );
 }
