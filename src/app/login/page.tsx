@@ -14,6 +14,18 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [slow, setSlow] = useState(false);
+
+  // The API sleeps on its free tier. After a few seconds of waiting, say so
+  // instead of leaving the button looking frozen.
+  useEffect(() => {
+    if (!busy) {
+      setSlow(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlow(true), 3500);
+    return () => clearTimeout(timer);
+  }, [busy]);
 
   useEffect(() => {
     warmUpApi();
@@ -104,6 +116,12 @@ function LoginForm() {
           <button className="btn-primary w-full" disabled={busy} type="submit">
             {busy ? "Signing in…" : "Sign in"}
           </button>
+          {slow && (
+            <p className="rounded-lg border border-line bg-surface/60 px-3 py-2 text-[12px] leading-relaxed text-ink-soft">
+              The server was idle, so it is starting up — the first sign-in of the day can take
+              up to a minute. Keep this page open.
+            </p>
+          )}
         </form>
 
         <p className="mt-6 text-center text-sm text-ink-soft">

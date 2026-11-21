@@ -11,6 +11,18 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [taken, setTaken] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [slow, setSlow] = useState(false);
+
+  // First request after an idle period wakes the free API instance; explain the
+  // wait rather than leaving "Creating account…" looking stuck.
+  useEffect(() => {
+    if (!busy) {
+      setSlow(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlow(true), 3500);
+    return () => clearTimeout(timer);
+  }, [busy]);
 
   // Start a sleeping API instance before the visitor finishes typing, and skip
   // the sign-up form entirely for visitors who already have a session.
@@ -128,6 +140,12 @@ export default function RegisterPage() {
             <button className="btn-primary w-full" disabled={busy} type="submit">
               {busy ? "Creating account…" : "Create account"}
             </button>
+            {slow && (
+              <p className="rounded-lg border border-line bg-surface/60 px-3 py-2 text-[12px] leading-relaxed text-ink-soft">
+                The server was idle, so it is starting up — this usually takes under a minute.
+                Keep this page open; your account is created once it answers.
+              </p>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-ink-soft">

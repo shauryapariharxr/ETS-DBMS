@@ -34,15 +34,49 @@ export async function ensureAccount(
     throw new Error(`${role} password must be at least ${MIN_PASSWORD_LENGTH} characters`);
   }
 
-  const { rows } = await client.query("SELECT id, role FROM users WHERE email = $1", [normalized]);
+  const { rows } = await client.query(
+    "SELECT id, role, password_hash FROM users WHERE email = $1",
+    [normalized]
+  );
 
   if (rows.length > 0) {
-    if (rows[0].role !== role) {
-      await client.query("UPDATE users SET role = $1 WHERE id = $2", [role, rows[0].id]);
-      log(`[setup] ${role} account promoted: ${normalized}`);
+    const account = rows[0];
+    const assignments = [];
+    const values = [];
+
+    if (account.role !== role) {
+      assignments.push(`role = $${values.length + 1}`);
+      values.push(role);
+    }
+
+    // The environment is the source of truth for staff credentials. If the
+    // dashboard password is corrected, the next boot must make it work instead
+    // of silently keeping the hash from the very first deploy — otherwise the
+    // documented admin login answers "Invalid email or password".
+    let passwordMatches = false;
+    if (account.password_hash) {
+      try {
+        passwordMatches = await bcrypt.compare(secret, account.password_hash);
+      } catch {
+        passwordMatches = false;
+      }
+    }
+    if (!passwordMatches) {
+      assignments.push(`password_hash = $${values.length + 1}`);
+      values.push(await bcrypt.hash(secret, 10));
+    }
+
+    if (assignments.length > 0) {
+      values.push(account.id);
+      await client.query(
+        `UPDATE users SET ${assignments.join(", ")} WHERE id = $${values.length}`,
+        values
+      );
+      log(`[setup] ${role} account synced from environment: ${normalized}`);
     } else {
       log(`[setup] ${role} account already present: ${normalized}`);
     }
+
     return { created: false, skipped: false, email: normalized };
   }
 

@@ -68,6 +68,21 @@ async function apiGet<T>(path: string): Promise<T | null> {
   return (await res.json()) as T;
 }
 
+/**
+ * The catalogue is the hottest read in the app and the API runs on a free tier
+ * that sleeps when idle, so an uncached render can pay a 30–50 s cold start.
+ * A few seconds of per-instance caching keeps refreshes and pagination instant
+ * without hiding newly published events for long.
+ */
+const EVENT_LIST_TTL_MS = 30_000;
+let eventListCache: { key: string; at: number; data: EventListPayload } | null = null;
+
+interface EventListPayload {
+  events: EventListItem[];
+  cities: string[];
+  pagination: Pagination;
+}
+
 export async function getEventList(opts: {
   q?: string;
   city?: string;
@@ -82,13 +97,18 @@ export async function getEventList(opts: {
   params.set("page", String(opts.page ?? 1));
   params.set("limit", String(opts.limit ?? 9));
 
-  const data = await apiGet<{
-    events: EventListItem[];
-    cities: string[];
-    pagination: Pagination;
-  }>(`/api/v1/events?${params.toString()}`);
+  const path = `/api/v1/events?${params.toString()}`;
+  const cached = eventListCache;
+  if (cached && cached.key === path && Date.now() - cached.at < EVENT_LIST_TTL_MS) {
+    return cached.data;
+  }
 
-  return data ?? { events: [], cities: [], pagination: { page: 1, limit: 9, total: 0, pages: 1 } };
+  const data = await apiGet<EventListPayload>(path);
+
+  const result =
+    data ?? { events: [], cities: [], pagination: { page: 1, limit: 9, total: 0, pages: 1 } };
+  eventListCache = { key: path, at: Date.now(), data: result };
+  return result;
 }
 
 export async function getEvent(id: number): Promise<EventDetail | null> {

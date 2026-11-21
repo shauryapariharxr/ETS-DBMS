@@ -120,7 +120,10 @@ export default async function HomePage({
       <Header session={session} />
 
       {/* ---- Hero ---- */}
-      <section className="relative overflow-hidden">
+      {/* No overflow-hidden here: clipping the soft glow at the section edge
+          left a visible hairline right under the navbar. inset-x-0 keeps it
+          inside the viewport, so nothing needs clipping. */}
+      <section className="relative">
         <div className="pointer-events-none absolute inset-x-0 -top-56 h-[42rem] bg-[radial-gradient(55%_55%_at_50%_10%,rgba(120,222,218,0.12),transparent_70%)]" />
 
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-12 sm:px-6 sm:pb-20 sm:pt-16">
