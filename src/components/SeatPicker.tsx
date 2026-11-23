@@ -215,8 +215,8 @@ export default function SeatPicker({
   const tierNames = tiers.map((t) => t.name);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <div>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="min-w-0">
         <h1 className="font-display text-2xl font-bold">{eventTitle}</h1>
         <p className="text-sm text-ink-soft">{venueName}</p>
 
@@ -268,7 +268,7 @@ export default function SeatPicker({
       </div>
 
       {/* Summary / checkout rail */}
-      <aside className="lg:sticky lg:top-6 lg:h-fit">
+      <aside className="min-w-0 lg:sticky lg:top-6 lg:h-fit">
         <div className="card p-5">
           <h2 className="font-display text-lg font-semibold">Your selection</h2>
 

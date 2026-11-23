@@ -49,19 +49,20 @@ export default function AuditPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold">Audit log</h1>
           <p className="text-sm text-ink-soft">Append-only record of every mutation (Rule 10).</p>
         </div>
-        <input className="input max-w-xs" placeholder="Filter by action, actor, entity…"
+        <input className="input sm:max-w-xs" placeholder="Filter by action, actor, entity…"
                value={filter} onChange={(e) => setFilter(e.target.value)} />
       </div>
 
       {refunds.length > 0 && (
-        <section className="card p-6">
+        <section className="card min-w-0 p-6">
           <h2 className="font-display text-lg font-semibold">Refunds</h2>
-          <table className="mt-3 w-full text-sm">
+          <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
             <thead className="text-left text-xs uppercase text-ink-soft">
               <tr><th className="py-2">Customer</th><th className="py-2">Event</th><th className="py-2">Amount</th><th className="py-2">Reason</th><th className="py-2">When</th></tr>
             </thead>
@@ -77,11 +78,12 @@ export default function AuditPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </section>
       )}
 
-      <div className="card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-mint-mist/50 text-left text-xs uppercase tracking-wide text-ink-soft">
             <tr>
               <th className="px-5 py-3">When</th>

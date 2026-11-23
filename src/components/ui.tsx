@@ -15,7 +15,7 @@ export function LogoMark({ className = "h-7 w-7" }: { className?: string }) {
 
 export function Logo() {
   return (
-    <Link href="/" aria-label="StagePass home" className="group flex items-center gap-2.5">
+    <Link href="/" aria-label="StagePass home" className="group flex shrink-0 items-center gap-2.5">
       <LogoMark className="h-7 w-7 opacity-90 transition-opacity group-hover:opacity-100" />
       <span className="font-display text-[15px] font-semibold tracking-[0.01em] text-ink">
         StagePass

@@ -259,7 +259,7 @@ export default function AdminEventsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold">Events</h1>
           <p className="text-sm text-ink-soft">
@@ -494,8 +494,8 @@ export default function AdminEventsPage() {
       )}
 
       {/* Events table */}
-      <div className="card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-mint-mist/50 text-left text-xs uppercase tracking-wide text-ink-soft">
             <tr>
               <th className="px-5 py-3">Event</th>

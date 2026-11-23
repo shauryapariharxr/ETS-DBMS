@@ -90,7 +90,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         </section>
 
         <div className="mt-6 grid gap-6 pb-4 lg:grid-cols-[1.65fr_1fr]">
-          <section className="card p-6">
+          <section className="card min-w-0 p-6">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="mono-label">Pricing</p>
@@ -99,8 +99,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               <p className="text-[12px] text-ink-soft">Prices locked at purchase</p>
             </div>
 
-            <div className="mt-5 overflow-hidden rounded-xl border border-line">
-              <table className="w-full text-sm">
+            <div className="mt-5 overflow-x-auto rounded-xl border border-line">
+              <table className="w-full min-w-[440px] text-sm">
                 <thead className="bg-mint-mist/60 text-left">
                   <tr>
                     <th className="mono-label px-4 py-3 text-ink-soft">Tier</th>
@@ -138,7 +138,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             </p>
           </section>
 
-          <aside className="card h-fit p-6">
+          <aside className="card h-fit min-w-0 p-6">
             <p className="mono-label">Checkout</p>
             <h2 className="mt-2.5 font-display text-lg font-semibold">Ready when you are</h2>
             <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">

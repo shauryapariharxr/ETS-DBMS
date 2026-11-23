@@ -47,7 +47,7 @@ export function AccountShell({ user, children }: { user: AccountUser; children: 
             Member area
           </span>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
             <Link href="/#events" className="hidden text-[13px] font-medium text-ink-soft hover:text-ink sm:inline">
               Browse events
             </Link>
@@ -63,7 +63,7 @@ export function AccountShell({ user, children }: { user: AccountUser; children: 
               <span className="grid h-7 w-7 place-items-center rounded-full bg-ink-blue/15 font-mono text-[11px] font-semibold text-ink-blue">
                 {initials(user.full_name)}
               </span>
-              <span className="max-w-[110px] truncate text-[13px] font-medium">
+              <span className="hidden max-w-[110px] truncate text-[13px] font-medium sm:inline">
                 {user.full_name.split(" ")[0]}
               </span>
             </Link>

@@ -70,8 +70,8 @@ export default function AdminUsersPage() {
       {msg && <p className="rounded-lg bg-success/10 px-4 py-2.5 text-sm font-medium text-success">{msg}</p>}
       {error && <p className="rounded-lg bg-danger/10 px-4 py-2.5 text-sm text-danger">{error}</p>}
 
-      <div className="card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-mint-mist/50 text-left text-xs uppercase tracking-wide text-ink-soft">
             <tr>
               <th className="px-5 py-3">User</th>

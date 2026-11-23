@@ -32,8 +32,9 @@ function LoginForm() {
     // Already signed in? Go straight to the member area, not the login form.
     fetch("/api/v1/auth/me")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.user) router.replace("/account");
+      .then((data?: { user?: { role?: string } } | null) => {
+        // Staff land in the console, customers in the member area.
+        if (data?.user) router.replace(data.user.role === "admin" ? "/admin" : "/account");
       })
       .catch(() => {});
   }, [router]);

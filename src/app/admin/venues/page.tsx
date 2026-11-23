@@ -78,7 +78,7 @@ export default function AdminVenuesPage() {
       {error && <p className="rounded-lg bg-danger/10 px-4 py-2.5 text-sm text-danger">{error}</p>}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <form onSubmit={create} className="card space-y-4 p-6">
+        <form onSubmit={create} className="card min-w-0 space-y-4 p-6">
           <h2 className="font-display text-lg font-semibold">New venue</h2>
           <div>
             <label className="label">Name</label>
@@ -123,7 +123,7 @@ export default function AdminVenuesPage() {
 
         <div className="space-y-3">
           {(venues ?? []).map((v) => (
-            <div key={v.id} className="card p-5">
+            <div key={v.id} className="card min-w-0 p-5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-display font-semibold">{v.name}</p>
@@ -131,18 +131,18 @@ export default function AdminVenuesPage() {
                 </div>
                 <span className="chip bg-mint-mist text-ink-blue">#{v.id}</span>
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
+              <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-center text-sm">
                 <div className="rounded-lg bg-mint-mist/60 py-2">
                   <p className="tnum font-semibold">{v.seats}</p>
-                  <p className="text-xs text-ink-soft">seats</p>
+                  <p className="text-[10px] text-ink-soft">seats</p>
                 </div>
                 <div className="rounded-lg bg-mint-mist/60 py-2">
                   <p className="tnum font-semibold">{v.sections}</p>
-                  <p className="text-xs text-ink-soft">sections</p>
+                  <p className="text-[10px] text-ink-soft">sections</p>
                 </div>
                 <div className="rounded-lg bg-mint-mist/60 py-2">
                   <p className="tnum font-semibold">{v.capacity}</p>
-                  <p className="text-xs text-ink-soft">capacity</p>
+                  <p className="text-[10px] text-ink-soft">capacity</p>
                 </div>
               </div>
             </div>

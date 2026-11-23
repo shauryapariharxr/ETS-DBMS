@@ -15,7 +15,7 @@ interface Stats {
 
 function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
-    <div className="card p-5">
+    <div className="card min-w-0 p-5">
       <p className="text-xs font-medium uppercase tracking-wide text-ink-soft">{label}</p>
       <p className={`tnum mt-1 font-display text-2xl font-bold ${accent ? "text-ink-blue" : ""}`}>{value}</p>
       {sub && <p className="mt-0.5 text-xs text-ink-soft">{sub}</p>}
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="card p-6">
+        <section className="card min-w-0 p-6">
           <h2 className="font-display text-lg font-semibold">Revenue — last 14 days</h2>
           {stats.series.every((s) => Number(s.total) === 0) ? (
             <div className="mt-6 flex h-40 items-end gap-1.5 rounded-xl border border-dashed border-line/70 p-3">
@@ -93,9 +93,10 @@ export default function AdminDashboard() {
           )}
         </section>
 
-        <section className="card p-6">
+        <section className="card min-w-0 p-6">
           <h2 className="font-display text-lg font-semibold">Occupancy by event</h2>
-          <table className="mt-4 w-full text-sm">
+          <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[420px] text-sm">
             <tbody>
               {stats.occupancy.slice(0, 6).map((o) => {
                 const pct = o.capacity ? Math.round((o.sold / o.capacity) * 100) : 0;
@@ -119,6 +120,7 @@ export default function AdminDashboard() {
               })}
             </tbody>
           </table>
+          </div>
         </section>
       </div>
     </div>
